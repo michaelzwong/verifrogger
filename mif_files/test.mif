@@ -1,0 +1,14 @@
+WIDTH=3;
+DEPTH=60;
+
+ADDRESS_RADIX=UNS;
+DATA_RADIX=UNS;
+
+CONTENT BEGIN
+    [0..10] : 0;
+    [10..20] : 1;
+    [20..30] : 2;
+    [30..40] : 3;
+    [40..50] : 4;
+    [50..60] : 5;
+END;
