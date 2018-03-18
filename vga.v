@@ -92,7 +92,7 @@ module plotter (
         
         // Increment on enable signal.
         if (en) begin
-            if (x <= MAX_X) begin
+            if (x < MAX_X - 1) begin
                 x <= x + 1;
             end else begin
                 x <= 0;
