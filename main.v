@@ -1,23 +1,39 @@
 `include "vga.v"
+`include "vga_adapter/vga_pll.v"
+`include "vga_adapter/vga_controller.v"
 `include "vga_adapter/vga_adapter.v"
 
+
 module main_test ();
+
+    // ### Wires. ###
 
     wire clk, reset;
     wire go;
 
-    wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg;
+    wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
 
     wire plot_done;
 
+    wire plot;
+    wire [8:0] x, y;
+    wire [2:0] color;
+
+    // VGA wires.
+    wire VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N;
+    wire [9:0] VGA_R, VGA_G, VGA_B;
+
+    // ### Datapath and control. ###
 
     datapath d0 (
         .clk(clk), .reset(reset),
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
-        .draw_scrn_game_bg(draw_scrn_game_bg),
+        .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog)
 
-        .plot_done(plot_done)
+        .plot_done(plot_done),
+
+        .plot(plot), .x(x), .y(y), .color(color)
     );
 
     control c0 (
@@ -26,7 +42,7 @@ module main_test ();
         .go(go), .plot_done(plot_done),
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
-        .draw_scrn_game_bg(draw_scrn_game_bg)
+        .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog)
     );
 
 endmodule // main_test 
@@ -40,36 +56,54 @@ endmodule // top
 module datapath (
     clk, reset,
 
-    draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg,
+    draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog
 
-    plot_done
+    plot_done,
+
+    plot, x, y, color
 );
 
     // ### Inputs, outputs and wires. ###
 
     input clk, reset;
 
-    input draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg;
+    input draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
 
     output plot_done;
 
-    wire [3:0] next_x;
-    wire [2:0] next_y;
-    wire [2:0] color;
+    wire [8:0] next_x;
+    wire [8:0] next_y;
+    output reg [2:0] color;
 
-    reg plot;
-    reg [3:0] x;
-    reg [2:0] y;
+    output reg plot;
+    output reg [8:0] x;
+    output reg [8:0] y;
+
+    wire draw;
+    assign draw = draw_scrn_start || draw_scrn_game_over || draw_scrn_game_bg || draw_frog;
 
     // ### Timing adjustments. ###
 
     always @ (posedge clk) begin
         // Plot signal, x and y need to be delayed by one clock cycle
         // due to delay of retrieving data from memory.
-        plot <= draw_scrn_start;
+        plot <= draw;
         x <= next_x;
         y <= next_y;
     end
+
+    // ### Plotter. ###
+
+    plotter #(
+        .WIDTH_X(9),
+        .WIDTH_Y(9),
+        .MAX_X(10),
+        .MAX_Y(6)
+    ) plt_scrn_start (
+        .clk(clk), .en(draw),
+        .x(next_x), .y(next_y),
+        .done(plot_done)
+    );
 
     // ### Start screen. ###
 
@@ -83,20 +117,73 @@ module datapath (
         .MIF_FILE("mif_files/test.mif")
     ) srm_scrn_start (
         .clk(clk),
-        .x(x), .y(y),
+        .x(next_x), .y(next_y),
         .color_out(scrn_start_color)
     );
 
-    plotter #(
+    // ### Game over screen. ###
+
+    wire [2:0] scrn_game_over_color;
+
+    sprite_ram_module #(
         .WIDTH_X(4),
         .WIDTH_Y(3),
-        .MAX_X(10),
-        .MAX_Y(6)
-    ) plt_scrn_start (
-        .clk(clk), .en(draw_scrn_start),
+        .RESOLUTION_X(10),
+        .RESOLUTION_Y(6),
+        .MIF_FILE("mif_files/test.mif")
+    ) srm_scrn_game_over (
+        .clk(clk),
         .x(next_x), .y(next_y),
-        .done(plot_done)
+        .color_out(scrn_game_over_color)
     );
+
+    // ### Game background screen. ###
+
+    wire [2:0] scrn_game_bg_color;
+
+    sprite_ram_module #(
+        .WIDTH_X(4),
+        .WIDTH_Y(3),
+        .RESOLUTION_X(10),
+        .RESOLUTION_Y(6),
+        .MIF_FILE("mif_files/test.mif")
+    ) srm_scrn_game_bg (
+        .clk(clk),
+        .x(next_x), .y(next_y),
+        .color_out(scrn_game_bg_color)
+    );
+
+    // ### Frog. ###
+
+    wire [2:0] frog_color;
+
+    sprite_ram_module #(
+        .WIDTH_X(4),
+        .WIDTH_Y(3),
+        .RESOLUTION_X(10),
+        .RESOLUTION_Y(6),
+        .MIF_FILE("mif_files/test.mif")
+    ) srm_frog ( 
+        .clk(clk),
+        .x(next_x), .y(next_y),
+        .color_out(frog_color)
+    );
+
+    // ### Color mux. ###
+
+    always @ (*) begin
+        // Color is set based on which draw signal is high.        
+        if (draw_scrn_start)
+            color = scrn_start_color;
+        else if (draw_scrn_game_over)
+            color = scrn_game_over_color;
+        else if (draw_scrn_game_bg) 
+            color = scrn_game_bg_color;
+        else if (draw_frog)
+            color = frog_color;
+        else 
+            color = 0;
+    end
 
 endmodule // datapath
 
@@ -133,7 +220,7 @@ module control (
             S_WAIT_GAME_OVER:
                 next_state = go ? S_DRAW_SCRN_GAME_OVER : S_WAIT_GAME_OVER;
             S_DRAW_SCRN_GAME_OVER:
-                next_state = plot_done ? S_WAIT_GAME_OVER : S_WAIT_GAME_BG;
+                next_state = plot_done ? S_WAIT_GAME_BG : S_DRAW_SCRN_GAME_OVER;
             S_WAIT_GAME_BG:
                 next_state = go ? S_DRAW_GAME_BG : S_WAIT_GAME_BG;
             S_DRAW_GAME_BG:

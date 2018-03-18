@@ -107,7 +107,8 @@ module plotter (
         end
 
         // Signal done when reached max.
-        if (x == MAX_X - 1 && y == MAX_Y - 1) begin
+        // MAX_X - 2 is so that the signal is high during the last (x, y).
+        if (x == MAX_X - 2 && y == MAX_Y - 1) begin
             done <= 1;
         end else begin
             done <= 0;

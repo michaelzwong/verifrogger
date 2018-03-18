@@ -75,6 +75,8 @@
  *		   of instantiation, rather than by modifying the source code. (Tomasz S. Czajkowski)
  */
 
+ `include "vga_address_translator.v"
+
 module vga_adapter(
 			resetn,
 			clock,
@@ -212,21 +214,21 @@ module vga_adapter(
 				.q_b (to_ctrl_colour)	// data out
 				);
 	defparam
-		VideoMemory.WIDTH_A = ((MONOCHROME == "FALSE") ? (BITS_PER_COLOUR_CHANNEL*3) : 1),
-		VideoMemory.WIDTH_B = ((MONOCHROME == "FALSE") ? (BITS_PER_COLOUR_CHANNEL*3) : 1),
-		VideoMemory.INTENDED_DEVICE_FAMILY = "Cyclone II",
-		VideoMemory.OPERATION_MODE = "DUAL_PORT",
-		VideoMemory.WIDTHAD_A = ((RESOLUTION == "320x240") ? (17) : (15)),
-		VideoMemory.NUMWORDS_A = ((RESOLUTION == "320x240") ? (76800) : (19200)),
-		VideoMemory.WIDTHAD_B = ((RESOLUTION == "320x240") ? (17) : (15)),
-		VideoMemory.NUMWORDS_B = ((RESOLUTION == "320x240") ? (76800) : (19200)),
-		VideoMemory.OUTDATA_REG_B = "CLOCK1",
-		VideoMemory.ADDRESS_REG_B = "CLOCK1",
-		VideoMemory.CLOCK_ENABLE_INPUT_A = "BYPASS",
-		VideoMemory.CLOCK_ENABLE_INPUT_B = "BYPASS",
-		VideoMemory.CLOCK_ENABLE_OUTPUT_B = "BYPASS",
-		VideoMemory.POWER_UP_UNINITIALIZED = "FALSE",
-		VideoMemory.INIT_FILE = BACKGROUND_IMAGE;
+		VideoMemory.width_a = ((MONOCHROME == "FALSE") ? (BITS_PER_COLOUR_CHANNEL*3) : 1),
+		VideoMemory.width_b = ((MONOCHROME == "FALSE") ? (BITS_PER_COLOUR_CHANNEL*3) : 1),
+		VideoMemory.intended_device_family = "Cyclone II",
+		VideoMemory.operation_mode = "DUAL_PORT",
+		VideoMemory.widthad_a = ((RESOLUTION == "320x240") ? (17) : (15)),
+		VideoMemory.numwords_a = ((RESOLUTION == "320x240") ? (76800) : (19200)),
+		VideoMemory.widthad_b = ((RESOLUTION == "320x240") ? (17) : (15)),
+		VideoMemory.numwords_b = ((RESOLUTION == "320x240") ? (76800) : (19200)),
+		VideoMemory.outdata_reg_b = "CLOCK1",
+		VideoMemory.address_reg_b = "CLOCK1",
+		VideoMemory.clock_enable_input_a = "BYPASS",
+		VideoMemory.clock_enable_input_b = "BYPASS",
+		VideoMemory.clock_enable_output_b = "BYPASS",
+		VideoMemory.power_up_uninitialized = "FALSE",
+		VideoMemory.init_file = BACKGROUND_IMAGE;
 		
 	vga_pll mypll(clock, clock_25);
 	/* This module generates a clock with half the frequency of the input clock.
