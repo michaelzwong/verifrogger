@@ -2,6 +2,7 @@
 `include "vga_adapter/vga_pll.v"
 `include "vga_adapter/vga_controller.v"
 `include "vga_adapter/vga_adapter.v"
+`include "ps2keyboard/PS2_Keyboard_Controller.v"
 
 
 module main_test ();
@@ -59,7 +60,8 @@ endmodule // main_test
 
 module top (
     CLOCK_50, 
-    KEY, SW, 
+    KEY, SW,
+    PS2_CLK, PS2_DAT,
     LEDR, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5,
     VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_R, VGA_G, VGA_B
 );
@@ -71,6 +73,10 @@ module top (
     // For auxilary input or debugging.
     input [9:0] SW;
     input [3:0] KEY;
+
+    // For keyboard input and output.
+    inout PS2_CLK;
+    inout PS2_DAT;
 
     // For auxiliary output or debugging.
     output [9:0] LEDR;
@@ -102,6 +108,11 @@ module top (
     // VGA wires.
     wire VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N;
     wire [9:0] VGA_R, VGA_G, VGA_B;
+
+    // Keyboard wires.
+    wire w, a, s, d;
+    wire left, right, up, down;
+    wire space, enter;
 
     // ### Datapath and control. ###
 
@@ -150,6 +161,16 @@ module top (
         .VGA_HS(VGA_HS), .VGA_VS(VGA_VS), .VGA_BLANK(VGA_BLANK_N), .VGA_SYNC(VGA_SYNC_N),
         .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B)
     );
+
+    // ### Keyboard tracker. ###
+    keyboard_tracker (
+        .clock(clk), .reset(reset),
+
+        .PS2_CLK(PS2_CLK), .PS2_DAT(PS2_DAT),
+
+        .w()
+    );
+
 
 endmodule // top 
 
