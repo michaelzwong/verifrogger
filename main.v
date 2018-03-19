@@ -163,12 +163,14 @@ module top (
     );
 
     // ### Keyboard tracker. ###
-    keyboard_tracker (
+    keyboard_tracker k0(
         .clock(clk), .reset(reset),
 
         .PS2_CLK(PS2_CLK), .PS2_DAT(PS2_DAT),
 
-        .w()
+        .w(w), .a(a), .s(s), .d(d),
+        .left(left), .right(right), .up(up), .down(down),
+        .space(space), .enter(enter)
     );
 
 
@@ -237,7 +239,8 @@ module datapath (
             x <= 300 + next_x_char;
             y <= 27 + next_y_char;
         end else if (draw_frog) begin
-            // Put some frog location logic here I think.
+            x <= 160 - 32 + next_x_frog;
+            x <= 120 - 24 + next_y_frog;
         end else begin
             x <= next_x_scrn;
             y <= next_y_scrn;
@@ -457,6 +460,8 @@ module control (
                 S_WAIT_RIVER_OBJ        = 8,    // Wait before drawing river objects.
                 S_DRAW_RIVER_OBJ_1      = 9,    // Draw river object 1.
                 S_DRAW_RIVER_OBJ_2      = 10;   // Draw river object 2.
+                S_WAIT_FROG             = 11;   // Wait before drawing frog.
+                S_DRAW_FROG             = 12;   // Draw frog.
                 // Add frog movement states here?
 
     // State table.
@@ -483,7 +488,12 @@ module control (
             S_DRAW_RIVER_OBJ_1:
                 next_state = plot_done ? S_DRAW_RIVER_OBJ_2 : S_DRAW_RIVER_OBJ_1;
             S_DRAW_RIVER_OBJ_2:
-                next_state = plot_done ? S_WAIT_START : S_DRAW_RIVER_OBJ_2;
+                next_state = plot_done ? S_WAIT_FROG : S_DRAW_RIVER_OBJ_2;
+            S_WAIT_FROG:
+                next_state = go ? S_DRAW_FROG : S_WAIT_FROG;
+            S_DRAW_FROG:
+                next_state = plot_done ? S_WAIT_START: S_DRAW_FROG;
+
         endcase
     end
 
@@ -529,6 +539,9 @@ module control (
             end
             S_DRAW_RIVER_OBJ_2: begin
                 draw_river_obj_2 = 1;
+            end
+            S_DRAW_FROG: begin
+                draw_frog = 1;
             end
         endcase
     end
