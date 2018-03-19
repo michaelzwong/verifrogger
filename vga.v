@@ -72,7 +72,7 @@ module numchar_ram_module (
     clk,
     numchar,
     x, y,
-    out
+    color_out
 );
 
     input clk;
@@ -81,7 +81,7 @@ module numchar_ram_module (
     
     output [2:0] color_out;
 
-    wire x_offset;
+    wire [7:0] x_offset;
     assign x_offset = numchar * 10;
 
     // ### SRM containing each numerical character. ###
@@ -91,11 +91,11 @@ module numchar_ram_module (
         .WIDTH_Y(4),
         .RESOLUTION_X(70),
         .RESOLUTION_Y(10),
-        .MIF_FILE("mif_files/num_chars.mif")
+        .MIF_FILE("graphics/num_chars.mif")
     ) srm_0 ( 
         .clk(clk),
         .x(x_offset + x), .y(y),
-        .color_out(color)
+        .color_out(color_out)
     );
 
 endmodule // numchar_ram_module 

@@ -8,14 +8,18 @@ add wave -bin clk -bin go
 add wave -bin /d0/draw
 add wave -bin plot -bin plot_done
 add wave -uns x -uns y -uns color
+add wave -uns /d0/score_color -uns /d0/lives_color
+add wave -uns /d0/nc_score/x_offset -uns /d0/nc_score/x -uns /d0/nc_score/y -uns /d0/nc_score/color_out
 
 add wave -uns /c0/current_state
 
 # Force some possible inputs.
 force clk 0 0ns, 1 1ns -repeat 2ns
 force reset 1 0ns, 0 4ns
-force go 0 0ns, 1 10ns, 0 15ns, 1 140ns, 0 145ns, 1 300ns, 0 305ns, 1 450ns, 0 455ns
+force score 10#2 0
+force lives 10#8 0
+force go 0 0ns, 1 10ns, 0 15ns, 1 140ns, 0 145ns, 1 300ns, 0 305ns, 1 750ns, 0 755ns, 1 1000ns, 0 1005ns
 
 # Run simulation and zoom into relevant area of waveform.
-run 1000ns
+run 10000ns
 wave zoom full
