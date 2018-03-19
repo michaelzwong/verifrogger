@@ -58,8 +58,98 @@ module main_test ();
 endmodule // main_test 
 
 module top (
-    
+    CLOCK_50, 
+    KEY, SW, 
+    LEDR, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5,
+    VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_R, VGA_G, VGA_B
 );
+
+    // ### FPGA inputs and outputs. ###
+
+    input CLOCK_50;
+
+    // For auxilary input or debugging.
+    input [9:0] SW;
+    input [3:0] KEY;
+
+    // For auxiliary output or debugging.
+    output [9:0] LEDR;
+    output [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5;
+
+    // VGA DAC signals.
+    output VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N;
+    output [9:0] VGA_R, VGA_G, VGA_B;
+
+    // ### Wires. ###
+
+    wire clk = CLOCK_50;
+    wire go = !KEY[0];
+    wire reset = !KEY[3];
+
+    wire [3:0] score = SW[3:0]; 
+    wire [3:0] lives = SW[7:4];
+
+    wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
+    wire draw_river_obj_1, draw_river_obj_2;
+    wire draw_score, draw_lives;
+
+    wire plot_done;
+
+    wire plot;
+    wire [8:0] x, y;
+    wire [2:0] color;
+
+    // VGA wires.
+    wire VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N;
+    wire [9:0] VGA_R, VGA_G, VGA_B;
+
+    // ### Datapath and control. ###
+
+    datapath d0 (
+        .clk(clk), .reset(reset),
+
+        .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
+        .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
+        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
+        .draw_score(draw_score), .draw_lives(draw_lives),
+
+        .score(score), .lives(lives),
+
+        .plot_done(plot_done),
+
+        .plot(plot), .x(x), .y(y), .color(color)
+    );
+
+    control c0 (
+        .clk(clk), .reset(reset),
+
+        .go(go), .plot_done(plot_done),
+
+        .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
+        .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
+        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
+        .draw_score(draw_score), .draw_lives(draw_lives)
+    );
+
+    // ### VGA adapter. ###
+
+    vga_adapter #(
+        .RESOLUTION("320x240"),
+        .MONOCHROME("FALSE"),
+        .BITS_PER_COLOUR_CHANNEL(1),
+        .BACKGROUND_IMAGE("mif_files/black.mif")
+    ) vga (
+        .clock(clk), .resetn(!reset),
+        
+        // Controlled signals.
+        .x(x), .y(y), .colour(color),
+        .plot(plot),
+
+        // VGA DAC signals.
+        .VGA_CLK(VGA_CLK),
+        .VGA_HS(VGA_HS), .VGA_VS(VGA_VS), .VGA_BLANK(VGA_BLANK_N), .VGA_SYNC(VGA_SYNC_N),
+        .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B)
+    );
 
 endmodule // top 
 
