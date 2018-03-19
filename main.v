@@ -3,6 +3,8 @@
 `include "vga_adapter/vga_controller.v"
 `include "vga_adapter/vga_adapter.v"
 `include "ps2keyboard/PS2_Keyboard_Controller.v"
+`include "counter.v"
+
 
 
 module main_test ();
@@ -15,6 +17,7 @@ module main_test ();
     wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     wire draw_river_obj_1, draw_river_obj_2;
     wire draw_score, draw_lives;
+    wire erase_frog;
 
     wire [3:0] score, lives;
 
@@ -36,7 +39,7 @@ module main_test ();
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
-        .draw_score(draw_score), .draw_lives(draw_lives),
+        .draw_score(draw_score), .draw_lives(draw_lives), .erase_frog(erase_frog),
 
         .score(score), .lives(lives),
 
@@ -53,7 +56,7 @@ module main_test ();
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
-        .draw_score(draw_score), .draw_lives(draw_lives)
+        .draw_score(draw_score), .draw_lives(draw_lives), .erase_frog(erase_frog)
     );
 
 endmodule // main_test 
@@ -91,6 +94,7 @@ module top (
     wire clk = CLOCK_50;
     wire go = !KEY[0];
     wire reset = !KEY[3];
+    wire enable = !KEY[2];
 
     wire [3:0] score = SW[3:0]; 
     wire [3:0] lives = SW[7:4];
@@ -98,6 +102,7 @@ module top (
     wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     wire draw_river_obj_1, draw_river_obj_2;
     wire draw_score, draw_lives;
+    wire erase_frog;
 
     wire plot_done;
 
@@ -111,8 +116,19 @@ module top (
 
     // Keyboard wires.
     wire w, a, s, d;
-    wire left, right, up, down;
+    wire up, left, down, right;
     wire space, enter;
+
+    // The output from the counter for the keyboard.
+    wire keyboard_clock;
+
+    // Since both w, a, s, d and up, left, down, right are the same controls, the wires can be combined.
+    wire up_c, left_c, down_c, right_c
+
+    assign up_c = w || up;
+    assign left_c = a || left;
+    assign down_c = s || down;
+    assign right_c = d || right;
 
     // ### Datapath and control. ###
 
@@ -123,8 +139,11 @@ module top (
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
         .draw_score(draw_score), .draw_lives(draw_lives),
+        .erase_frog(erase_frog),
 
         .score(score), .lives(lives),
+
+        .left(left_c), .right(right_c), .up(up_c), .down(down_c),
 
         .plot_done(plot_done),
 
@@ -139,7 +158,8 @@ module top (
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
-        .draw_score(draw_score), .draw_lives(draw_lives)
+        .draw_score(draw_score), .draw_lives(draw_lives),
+        .erase_frog(erase_frog)
     );
 
     // ### VGA adapter. ###
@@ -162,9 +182,17 @@ module top (
         .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B)
     );
 
+    // ### Counter to delay the keyboard. ###
+    counter counter0 {
+        .clock(clock),
+        .en(enable),
+        .rst(reset),
+        .out(keyboard_clock)
+    }
+
     // ### Keyboard tracker. ###
     keyboard_tracker k0(
-        .clock(clk), .reset(reset),
+        .clock(keyboard_clock), .reset(reset),
 
         .PS2_CLK(PS2_CLK), .PS2_DAT(PS2_DAT),
 
@@ -182,8 +210,11 @@ module datapath (
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
     draw_river_obj_1, draw_river_obj_2,
     draw_score, draw_lives,
+    erase_frog,
 
     score, lives,
+
+    left, right, up, down,
 
     plot_done,
 
@@ -197,8 +228,11 @@ module datapath (
     input draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     input draw_river_obj_1, draw_river_obj_2;
     input draw_score, draw_lives;
+    input erase_frog;
 
     input [3:0] score, lives;
+
+    input left, right, up, down;
 
     output plot_done;
     wire plot_done_scrn, plot_done_char, plot_done_river_obj;
@@ -239,8 +273,19 @@ module datapath (
             x <= 300 + next_x_char;
             y <= 27 + next_y_char;
         end else if (draw_frog) begin
-            x <= 160 - 32 + next_x_frog;
-            x <= 120 - 24 + next_y_frog;
+            if(left && next_x_frog - 1 >= 0) begin
+                x <= next_x_frog  - 1;
+            end else if(right && next_x_frog + 1 <= 288) begin
+                x <= next_x_frog + 1;
+            end else if(up && next_y_frog - 1 >= 0) begin
+                y <= next_y_frog - 1;
+            end else if(down && next_y_frog + 1 <= 216) begin
+                y <= next_y_frog + 1;
+            end
+        end else if (erase_frog) begin
+            x <= next_x_frog;
+            y <= next_y_frog;
+        end
         end else begin
             x <= next_x_scrn;
             y <= next_y_scrn;
@@ -424,6 +469,8 @@ module datapath (
             color = score_color;
         else if (draw_lives)
             color = lives_color;
+        else if (erase_frog)
+            color = scrn_game_bg_color;
         else 
             color = 0;
     end
@@ -436,7 +483,8 @@ module control (
 
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
     draw_river_obj_1, draw_river_obj_2,
-    draw_score, draw_lives
+    draw_score, draw_lives,
+    erase_frog
 );
 
     input clk, reset;
@@ -445,6 +493,7 @@ module control (
     output reg draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     output reg draw_river_obj_1, draw_river_obj_2;
     output reg draw_score, draw_lives;
+    output reg erase_frog;
 
     reg [3:0] current_state, next_state;
 
@@ -462,7 +511,8 @@ module control (
                 S_DRAW_RIVER_OBJ_2      = 10;   // Draw river object 2.
                 S_WAIT_FROG             = 11;   // Wait before drawing frog.
                 S_DRAW_FROG             = 12;   // Draw frog.
-                // Add frog movement states here?
+                S_WAIT_ERASE_FROG       = 13;   // Wait to erase the frog.
+                S_ERASE_FROG            = 14;   // Erase frog.
 
     // State table.
     always @ (posedge clk) begin
@@ -492,7 +542,11 @@ module control (
             S_WAIT_FROG:
                 next_state = go ? S_DRAW_FROG : S_WAIT_FROG;
             S_DRAW_FROG:
-                next_state = plot_done ? S_WAIT_START: S_DRAW_FROG;
+                next_state = plot_done ? S_WAIT_ERASE_FROG: S_DRAW_FROG;
+            S_WAIT_ERASE_FROG:
+                next_state = go ? S_ERASE_FROG: S_WAIT_ERASE_FROG;
+            S_ERASE_FROG:
+                next_state = plot_done ? S_WAIT_START: S_ERASE_FROG;
 
         endcase
     end
@@ -516,6 +570,8 @@ module control (
         draw_river_obj_1 = 0;
         draw_river_obj_2 = 0;
         draw_frog = 0;
+        erase_frog = 0;
+
 
         // Set control signals based on state.
         case (current_state) 
@@ -542,6 +598,9 @@ module control (
             end
             S_DRAW_FROG: begin
                 draw_frog = 1;
+            end
+            S_ERASE_FROG: begin
+                erase_frog = 1;
             end
         endcase
     end
