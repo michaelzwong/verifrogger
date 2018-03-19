@@ -1,10 +1,6 @@
 $files = Get-ChildItem -Filter "*.bmp";
 
 ForEach ($file in $files) {
-    Write-Output "`n   ### CONVERING $($file.BaseName).bmp ###";
-    .\bmp2mif.exe $file.FullName;
-    $mifName = $file.BaseName + ".mif";
-    Move-Item "image.colour.mif" $mifName -Force;
+    Write-Output "### CONVERING $($file.BaseName).bmp ###";
+    python bmp2mif.py $file.FullName;
 }
-
-Remove-Item "image.mono.mif";

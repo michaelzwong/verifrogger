@@ -66,8 +66,39 @@ module sprite_ram_module (
         .q_a        (color_out)
     );
     
-
 endmodule // sprite_ram_module
+
+module numchar_ram_module (
+    clk,
+    numchar,
+    x, y,
+    out
+);
+
+    input clk;
+    input [3:0] numchar; // The numerical character to display.
+    input [4:0] x, y;
+    
+    output [2:0] color_out;
+
+    wire x_offset;
+    assign x_offset = numchar * 10;
+
+    // ### SRM containing each numerical character. ###
+
+    sprite_ram_module #(
+        .WIDTH_X(7),
+        .WIDTH_Y(4),
+        .RESOLUTION_X(70),
+        .RESOLUTION_Y(10),
+        .MIF_FILE("mif_files/num_chars.mif")
+    ) srm_0 ( 
+        .clk(clk),
+        .x(x_offset + x), .y(y),
+        .color_out(color)
+    );
+
+endmodule // numchar_ram_module 
 
 module plotter (
     clk, en,
