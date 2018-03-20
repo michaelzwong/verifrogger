@@ -99,8 +99,8 @@ module VeriFrogger (
     wire [3:0] score = SW[3:0]; 
     wire [3:0] lives = SW[7:4];
 
-	 reg go;
-	 
+     reg go;
+     
     wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     wire draw_river_obj_1, draw_river_obj_2;
     wire draw_score, draw_lives;
@@ -131,55 +131,55 @@ module VeriFrogger (
 //    assign left_c = a || left;
 //    assign down_c = s || down;
 //    assign right_c = d || right;
-	 
-	 // ### GO button stuff. ###
-	 
-	 reg [1:0] go_state, go_next_state;
-	 
-	 localparam GS_WAIT_GO = 0,
-					GS_GO_1	  = 1,
-					GS_GO_2	  = 2,
-					GS_WAIT	  = 3;
-					
-	 always @ (*) begin
-		case (go_state)
-			GS_WAIT_GO: 
-				go_next_state = go_key ? GS_GO_1 : GS_WAIT_GO;
-			GS_GO_1: 
-				go_next_state = GS_GO_2;
-			GS_GO_2: 
-				go_next_state = GS_WAIT;
-			GS_WAIT: 
-				go_next_state = !go_key ? GS_WAIT_GO : GS_WAIT;
-		endcase 
-	 end
-	 
-	 always @ (*) begin
-			go = ((go_state == GS_GO_1) || (go_state == GS_GO_2)) ? 1 : 0;
-	 end
-	 
-	 always @ (posedge clk) begin
-			if (reset)
-				go_state <= GS_WAIT_GO;
-			else
-				go_state <= go_next_state;
-	 end
+     
+     // ### GO button stuff. ###
+     
+     reg [1:0] go_state, go_next_state;
+     
+     localparam GS_WAIT_GO = 0,
+                    GS_GO_1	  = 1,
+                    GS_GO_2	  = 2,
+                    GS_WAIT	  = 3;
+                    
+     always @ (*) begin
+        case (go_state)
+            GS_WAIT_GO: 
+                go_next_state = go_key ? GS_GO_1 : GS_WAIT_GO;
+            GS_GO_1: 
+                go_next_state = GS_GO_2;
+            GS_GO_2: 
+                go_next_state = GS_WAIT;
+            GS_WAIT: 
+                go_next_state = !go_key ? GS_WAIT_GO : GS_WAIT;
+        endcase 
+     end
+     
+     always @ (*) begin
+            go = ((go_state == GS_GO_1) || (go_state == GS_GO_2)) ? 1 : 0;
+     end
+     
+     always @ (posedge clk) begin
+            if (reset)
+                go_state <= GS_WAIT_GO;
+            else
+                go_state <= go_next_state;
+     end
 
     // ### Debug stuff. ###
-	 
-	 wire [3:0] current_state;
-	 
-	 hex_dec hd0 (.in(current_state), .out(HEX0));
-	 
-	 hex_dec hd1 (.in(go_state), .out(HEX1));
-	 
-	 hex_dec hd2 (.in(go_key), .out(HEX2));
-	
-	 assign LEDR[3] = up;
-	 assign LEDR[2] = left;
-	 assign LEDR[1] = down;
-	 assign LEDR[0] = right;
-	 
+     
+     wire [3:0] current_state;
+     
+     hex_dec hd0 (.in(current_state), .out(HEX0));
+     
+     hex_dec hd1 (.in(go_state), .out(HEX1));
+     
+     hex_dec hd2 (.in(go_key), .out(HEX2));
+    
+     assign LEDR[3] = up;
+     assign LEDR[2] = left;
+     assign LEDR[1] = down;
+     assign LEDR[0] = right;
+     
 
     // ### Datapath and control. ###
 
@@ -191,12 +191,12 @@ module VeriFrogger (
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
         .draw_score(draw_score), .draw_lives(draw_lives),
         .erase_frog(erase_frog),
-		  
-		  .ld_frog_loc(ld_frog_loc),
+          
+          .ld_frog_loc(ld_frog_loc),
 
         .score(score), .lives(lives),
-		  
-		  .frame_tick(frame_tick),
+          
+          .frame_tick(frame_tick),
 
         .left(left), .right(right), .up(up), .down(down),
 
@@ -209,18 +209,18 @@ module VeriFrogger (
         .clk(clk), .reset(reset),
 
         .go(go), .plot_done(plot_done),
-		  
-		  .frame_tick(frame_tick),
+          
+          .frame_tick(frame_tick),
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
         .draw_score(draw_score), .draw_lives(draw_lives),
         .erase_frog(erase_frog),
-		  
-		  .ld_frog_loc(ld_frog_loc),
-		  
-		  .current_state(current_state)
+          
+          .ld_frog_loc(ld_frog_loc),
+          
+          .current_state(current_state)
     );
 
     // ### VGA adapter. ###
@@ -242,28 +242,28 @@ module VeriFrogger (
         .VGA_HS(VGA_HS), .VGA_VS(VGA_VS), .VGA_BLANK(VGA_BLANK_N), .VGA_SYNC(VGA_SYNC_N),
         .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B)
     );
-	 
+     
 
     // ### Keyboard tracker. ###
-	 
-	 	 keyboard_tracker #(.PULSE_OR_HOLD(0)) tester(
-	     .clock(CLOCK_50),
-		  .reset(!reset),
-		  .PS2_CLK(PS2_CLK),
-		  .PS2_DAT(PS2_DAT),
-		  .w(up),
-		  .a(left),
-		  .s(down),
-		  .d(right),
-		  .left(l),
-		  .right(r),
-		  .up(u),
-		  .down(d),
-		  .space(s),
-		  .enter(e)
-		  );
-	 
-	 
+     
+          keyboard_tracker #(.PULSE_OR_HOLD(0)) tester(
+         .clock(CLOCK_50),
+          .reset(!reset),
+          .PS2_CLK(PS2_CLK),
+          .PS2_DAT(PS2_DAT),
+          .w(up),
+          .a(left),
+          .s(down),
+          .d(right),
+          .left(l),
+          .right(r),
+          .up(u),
+          .down(d),
+          .space(s),
+          .enter(e)
+          );
+     
+     
 //    keyboard_tracker k0 (
 //        .clock(clk), .reset(!reset),
 //
@@ -284,12 +284,12 @@ module datapath (
     draw_river_obj_1, draw_river_obj_2,
     draw_score, draw_lives,
     erase_frog,
-	 
-	 ld_frog_loc,
+     
+     ld_frog_loc,
 
     score, lives,
-	 
-	 frame_tick,
+     
+     frame_tick,
 
     left, right, up, down,
 
@@ -306,7 +306,7 @@ module datapath (
     input draw_river_obj_1, draw_river_obj_2;
     input draw_score, draw_lives;
     input erase_frog;
-	 input ld_frog_loc;
+     input ld_frog_loc;
 
     input [3:0] score, lives;
 
@@ -323,8 +323,8 @@ module datapath (
     output reg plot;
     output reg [8:0] x;
     output reg [8:0] y;
-	 
-	 reg [8:0] frog_x, frog_y;
+     
+     reg [8:0] frog_x, frog_y;
 
     wire draw, draw_scrn, draw_char, draw_river_obj;
     assign draw = draw_scrn || draw_char || draw_river_obj || draw_frog || erase_frog;
@@ -332,19 +332,19 @@ module datapath (
     assign draw_char = draw_score || draw_lives;
     assign draw_river_obj = draw_river_obj_1 || draw_river_obj_2;
 
-	 // ### Counter to delay the keyboard. ###
-	 
-	 wire [20:0] frame_counter;
-	 output frame_tick;
-	 assign frame_tick = frame_counter == 833332;
-	 
+     // ### Counter to delay the keyboard. ###
+     
+     wire [20:0] frame_counter;
+     output frame_tick;
+     assign frame_tick = frame_counter == 833332;
+     
     counter counter0 (
         .clk(clk),
         .en(1),
         .rst(reset),
         .out(frame_counter)
     );
-	 
+     
     // ### Timing adjustments. ###
 
     always @ (posedge clk) begin
@@ -353,10 +353,10 @@ module datapath (
         // The x and y offsets specify the top left corner of the sprite 
         // that is being drawn.
         plot <= draw;
-		  if (reset) begin
-				frog_x <= 0;
-				frog_y <= 0;
-		  end else if (draw_river_obj_1) begin
+          if (reset) begin
+                frog_x <= 0;
+                frog_y <= 0;
+          end else if (draw_river_obj_1) begin
             x <= 20 + next_x_river_obj;
             y <= 80 + next_y_river_obj;
         end else if (draw_river_obj_2) begin
@@ -369,8 +369,8 @@ module datapath (
             x <= 300 + next_x_char;
             y <= 27 + next_y_char;
         end else if (draw_frog) begin
-				x <= frog_x + next_x_frog;
-				y <= frog_y + next_y_frog;
+                x <= frog_x + next_x_frog;
+                y <= frog_y + next_y_frog;
 //            if(left && next_x_frog - 1 >= 0) begin
 //                x <= next_x_frog  - 1;
 //            end else if(right && next_x_frog + 1 <= 288) begin
@@ -381,19 +381,19 @@ module datapath (
 //                y <= next_y_frog + 1;
 //            end
         end else if (erase_frog) begin
-				x <= frog_x + next_x_frog;
-				y <= frog_y + next_y_frog;
+                x <= frog_x + next_x_frog;
+                y <= frog_y + next_y_frog;
         end else begin
             x <= next_x_scrn;
             y <= next_y_scrn;
         end
-		  
-		  if (ld_frog_loc) begin
-				frog_x <= frog_x + right - left;
-				frog_y <= frog_y - up + down;
-		  end
+          
+          if (ld_frog_loc) begin
+                frog_x <= frog_x + right - left;
+                frog_y <= frog_y - up + down;
+          end
     end
-	
+    
 
     // ### Plotters. ###
 
@@ -583,31 +583,31 @@ endmodule // datapath
 module control (
     clk, reset,
    
-	 go, plot_done,
+     go, plot_done,
 
-	 frame_tick,
-	 
+     frame_tick,
+     
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
     draw_river_obj_1, draw_river_obj_2,
     draw_score, draw_lives,
     erase_frog,
-	 
-	 ld_frog_loc,
-	 
-	 current_state
+     
+     ld_frog_loc,
+     
+     current_state
 );
 
     input clk, reset;
     input go, plot_done;
-	 input frame_tick;
+     input frame_tick;
 
     output reg draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     output reg draw_river_obj_1, draw_river_obj_2;
     output reg draw_score, draw_lives;
     output reg erase_frog;
-	 output reg ld_frog_loc;
+     output reg ld_frog_loc;
 
-	 output reg [3:0] current_state;
+     output reg [3:0] current_state;
     reg [3:0] next_state;
 
     // States.
@@ -656,8 +656,8 @@ module control (
                 next_state = go ? S_ERASE_FROG : S_WAIT_FROG;
             S_ERASE_FROG:
                 next_state = plot_done ? S_LOAD_FROG_LOC: S_ERASE_FROG;
-			   S_LOAD_FROG_LOC:
-					 next_state = S_DRAW_FROG;
+               S_LOAD_FROG_LOC:
+                     next_state = S_DRAW_FROG;
             S_DRAW_FROG:
                 next_state = frame_tick ? S_ERASE_FROG: S_DRAW_FROG;
         endcase
@@ -683,7 +683,7 @@ module control (
         draw_river_obj_2 = 0;
         draw_frog = 0;
         erase_frog = 0;
-		  ld_frog_loc = 0;
+          ld_frog_loc = 0;
 
 
         // Set control signals based on state.
@@ -712,9 +712,9 @@ module control (
             S_ERASE_FROG: begin
                 erase_frog = 1;
             end
-				S_LOAD_FROG_LOC: begin
-					ld_frog_loc = 1;
-				end
+                S_LOAD_FROG_LOC: begin
+                    ld_frog_loc = 1;
+                end
             S_DRAW_FROG: begin
                 draw_frog = 1;
             end
