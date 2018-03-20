@@ -15,9 +15,9 @@ module counter #(
       //==============================
       // Top level block parameters
       //==============================
-      parameter DATA_WIDTH   = 20,               // number of bits in counter
+      parameter DATA_WIDTH   = 20,                // number of bits in counter
       parameter COUNT_FROM   = 0,                // start with this number   
-      parameter COUNT_TO     = 2^(DATA_WIDTH-1), // value to count to in CL case
+      parameter COUNT_TO     = 833333, // value to count to in CL case
       parameter STEP         = 1                 // negative or positive, sets direction
    ) (
       //===============
@@ -32,8 +32,7 @@ module counter #(
       //===============
       output reg [DATA_WIDTH-1:0] out
    );
-   wire [DATA_WIDTH-1:0] count;
-   reg count;
+
    // Synchronous logic
    always @(posedge clk)
    begin
@@ -43,17 +42,12 @@ module counter #(
       begin
          if (en == 1)
          begin
-            count <= count + STEP;
-            if(count == COUNT_TO)
-            begin
-               out <= 1;
-            end
+            out <= out + STEP;
          end
       end
       else
       begin
-         count <= COUNT_FROM;
-         out <= 0;
+         out <= COUNT_FROM;
       end // else: if(rst != 0)
    end
 endmodule
