@@ -329,6 +329,8 @@ module datapath (
     output reg [8:0] y;
 
      reg [8:0] frog_x, frog_y;
+     reg [8:0] river_object_1_x, river_object_1_y;
+     reg [8:0] river_object_2_x, river_object_2_y;
 
     wire draw, draw_scrn, draw_char, draw_river_obj;
     assign draw = draw_scrn || draw_char || draw_river_obj || draw_frog || erase_frog;
@@ -357,15 +359,24 @@ module datapath (
         // The x and y offsets specify the top left corner of the sprite
         // that is being drawn.
         plot <= draw;
-          if (reset) begin
-                frog_x <= 0;
-                frog_y <= 0;
-          end else if (draw_river_obj_1) begin
-            x <= 20 + next_x_river_obj;
-            y <= 80 + next_y_river_obj;
+
+        if (reset) begin
+            frog_x <= 0;
+            frog_y <= 0;
+            // river object 1 flows right at 60 pixels per second
+            river_object_1_x <= 20;
+            river_object_1_y <= 80;
+            // river object 2 flows left at 60 pixels per second
+            river_object_2_x <= 120;
+            river_object_2_y <= 150;
+        end else if (draw_river_obj_1) begin
+            river_object_1_x <= river_object_1_x + 1;
+            x <= river_object_1_x + next_x_river_obj;
+            y <= river_object_1_y + next_y_river_obj;
         end else if (draw_river_obj_2) begin
-            x <= 120 + next_x_river_obj;
-            y <= 150 + next_y_river_obj;
+            river_object_2_x <= river_object_2_x - 1;
+            x <= river_object_2_y + next_x_river_obj;
+            y <= river_object_2_y + next_y_river_obj;
         end else if (draw_score) begin
             x <= 300 + next_x_char;
             y <= 14 + next_y_char;
@@ -639,6 +650,7 @@ module control (
                 S_DRAW_RIVER_OBJ_2      = 10,   // Draw river object 2.
                 S_WAIT_FROG             = 11,   // Wait before drawing frog.
                 S_DRAW_FROG             = 12,   // Draw frog.
+                S_WAIT_FRAME_TICK       = 13;   // wait for frame tick.
                 // S_WAIT_FROG_MOVEMENT    = 13,   // Wait before preceding to movement state.
                 // S_FROG_MOVEMENT         = 14;   // Movement state of frog (When key is pressed).
                 // S_DRAW_FROG             = 12,   // Draw frog.
@@ -676,6 +688,8 @@ module control (
                 next_state = go ? S_DRAW_FROG : S_WAIT_FROG;
             S_DRAW_FROG:
                 next_state = plot_done ? S_DRAW_GAME_BG : S_DRAW_FROG;
+            S_WAIT_FRAME_TICK:
+                next_state = frame_tick ? S_WAIT_GAME_BG : S_WAIT_FRAME_TICK;
                 // if(plot_done && mov_key_pressed)
                 //   next_state = S_DRAW_GAME_BG;
                 // else
