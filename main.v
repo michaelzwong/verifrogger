@@ -373,14 +373,19 @@ module datapath (
             x <= 300 + next_x_char;
             y <= 27 + next_y_char;
         end else if (draw_frog) begin
-            // check boundaries
+            // check left and right boundaries (max x = resolution width - frog width - 1)
             if((frog_x + right - left >= 0) && (frog_x + right - left <= 320 - 32 - 1)) begin
+                // update top left pixel's x coordinate if possible
                 frog_x <= frog_x + right - left;
             end
+            // otherwise do not move the frog's x position
             x <= frog_x + next_x_frog;
+            // check up and down boundaries (max y = resolution height - frog height - 1)
             if ((next_y_frog - up + down >= 0) && (next_y_frog - up + down <= 240 - 24 - 1)) begin
+                // update top left pixel's y coordinate if possible
                 frog_y <= frog_y - up + down;
             end
+            // otherwise do not move the frog's y position
             y <= frog_y + next_y_frog;
         end
 //            if(left && next_x_frog - 1 >= 0) begin
