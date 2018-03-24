@@ -363,19 +363,22 @@ module datapath (
         if (reset) begin
             frog_x <= 0;
             frog_y <= 0;
-            // river object 1 flows right at 60 pixels per second
             river_object_1_x <= 20;
             river_object_1_y <= 80;
-            // river object 2 flows left at 60 pixels per second
             river_object_2_x <= 120;
             river_object_2_y <= 150;
+
         end else if (draw_river_obj_1) begin
+            // river object 1 flows right at 60 pixels per second
+            // object only moves horizontally
             river_object_1_x <= river_object_1_x + 1;
             x <= river_object_1_x + next_x_river_obj;
             y <= river_object_1_y + next_y_river_obj;
         end else if (draw_river_obj_2) begin
+            // river object 2 flows left at 60 pixels per second
+            // object only moves horizontally
             river_object_2_x <= river_object_2_x - 1;
-            x <= river_object_2_y + next_x_river_obj;
+            x <= river_object_2_x + next_x_river_obj;
             y <= river_object_2_y + next_y_river_obj;
         end else if (draw_score) begin
             x <= 300 + next_x_char;
