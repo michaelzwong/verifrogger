@@ -373,16 +373,15 @@ module datapath (
             x <= 300 + next_x_char;
             y <= 27 + next_y_char;
         end else if (draw_frog) begin
-            if((next_x_frog + right - left >= 0) && (next_x_frog + right - left <= 320 - 32 - 1)) begin
-                x <= next_x_frog + right - left;
-            end else begin
-                x <= next_x_frog;
+            // check boundaries
+            if((frog_x + right - left >= 0) && (frog_x + right - left <= 320 - 32 - 1)) begin
+                frog_x <= frog_x + right - left;
             end
-            if ((next_y_frog + right - left >= 0) && (next_x_frog + right - left <= 240 - 24 - 1)) begin
-                y <= next_y_frog - up + down;
-            end else begin
-                y <= next_y_frog;
+            x <= frog_x + next_x_frog;
+            if ((next_y_frog - up + down >= 0) && (next_y_frog - up + down <= 240 - 24 - 1)) begin
+                frog_y <= frog_y - up + down;
             end
+            y <= frog_y + next_y_frog;
         end
 //            if(left && next_x_frog - 1 >= 0) begin
 //                x <= next_x_frog  - 1;
