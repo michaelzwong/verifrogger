@@ -15,7 +15,7 @@ module main_test ();
     wire go;
 
     wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
-    wire draw_river_obj_1, draw_river_obj_2;
+    wire draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
     wire draw_score, draw_lives;
     wire erase_frog;
 
@@ -38,7 +38,7 @@ module main_test ();
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
-        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
+        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(.draw_river_obj_3),
         .draw_score(draw_score), .draw_lives(draw_lives), .erase_frog(erase_frog),
 
         .score(score), .lives(lives),
@@ -55,7 +55,7 @@ module main_test ();
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
-        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
+        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(draw_river_obj_3),
         .draw_score(draw_score), .draw_lives(draw_lives), .erase_frog(erase_frog)
     );
 
@@ -102,7 +102,7 @@ module VeriFrogger (
      reg go;
 
     wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
-    wire draw_river_obj_1, draw_river_obj_2;
+    wire draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
     wire draw_score, draw_lives;
     wire erase_frog;
 
@@ -192,7 +192,7 @@ module VeriFrogger (
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
-        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
+        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(draw_river_obj_3),
         .draw_score(draw_score), .draw_lives(draw_lives),
         .erase_frog(erase_frog),
 
@@ -218,7 +218,7 @@ module VeriFrogger (
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
-        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2),
+        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(draw_river_obj_3),
         .draw_score(draw_score), .draw_lives(draw_lives),
         .erase_frog(erase_frog),
 
@@ -281,11 +281,18 @@ module VeriFrogger (
 
 endmodule // top
 
+
+/**
+................................................................................
+..Datapath......................................................................
+................................................................................
+**/
+
 module datapath (
     clk, reset,
 
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
-    draw_river_obj_1, draw_river_obj_2,
+    draw_river_obj_1, draw_river_obj_2, draw_river_obj_3,
     draw_score, draw_lives,
     erase_frog,
 
@@ -307,7 +314,7 @@ module datapath (
     input clk, reset;
 
     input draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
-    input draw_river_obj_1, draw_river_obj_2;
+    input draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
     input draw_score, draw_lives;
     input erase_frog;
       input ld_frog_loc;
@@ -328,15 +335,20 @@ module datapath (
     output reg [8:0] x;
     output reg [8:0] y;
 
-     reg [8:0] frog_x, frog_y;
-     reg [8:0] river_object_1_x, river_object_1_y;
-     reg [8:0] river_object_2_x, river_object_2_y;
+    // top left coordinates of objects in the game
+    reg [8:0] frog_x, frog_y;
+    // first row of river objects
+    reg [8:0] river_object_1_x, river_object_1_y;
+    // second row of river objects
+    reg [8:0] river_object_2_x, river_object_2_y;
+    // third row of river objects
+    reg [8:0] river_object_3_x, river_object_3_y;
 
     wire draw, draw_scrn, draw_char, draw_river_obj;
     assign draw = draw_scrn || draw_char || draw_river_obj || draw_frog || erase_frog;
     assign draw_scrn = draw_scrn_start || draw_scrn_game_over || draw_scrn_game_bg;
     assign draw_char = draw_score || draw_lives;
-    assign draw_river_obj = draw_river_obj_1 || draw_river_obj_2;
+    assign draw_river_obj = draw_river_obj_1 || draw_river_obj_2 || draw_river_obj_3;
 
      // ### Counter to delay the keyboard. ###
 
@@ -352,13 +364,19 @@ module datapath (
     );
 
     // LFSR (Linear feedback shift register), outputs a random 13 bit number
-    wire [12:0] random_13_bit_num;
-    
+    wire [12:0] rnd_13_bit_num;
+
+    // Used for spawning river objects. Minimum distance is min_dist, max is
+    // min_dist + 15
+    wire [3:0] rnd_4_bit_num;
     LFSR lfsr0 (
       .clock(clk),
       .reset(reset),
-      .rnd(random_13_bit_num)
+      .rnd(rnd_13_bit_num)
     );
+
+    // get least significant bit
+    rnd_4_bit_num =  rnd_13_bit_num[3:0];
 
     // ### Timing adjustments. ###
 
@@ -372,10 +390,12 @@ module datapath (
         if (reset) begin
             frog_x <= 0;
             frog_y <= 0;
-            river_object_1_x <= 20;
-            river_object_1_y <= 80;
-            river_object_2_x <= 120;
-            river_object_2_y <= 150;
+            river_object_1_x <= 0;  // test spawn value = 20
+            river_object_1_y <= 75;   // test spawn value = 80
+            river_object_2_x <= 319;  // test spawn value = 120
+            river_object_2_y <= 115;  // test spawn value = 150
+            river_object_3_x <=  0;
+            river_object_3_y <= 155;
 
         end else if (draw_river_obj_1) begin
             // river object 1 flows right at 60 pixels per second
@@ -389,6 +409,12 @@ module datapath (
             river_object_2_x <= river_object_2_x - 1;
             x <= river_object_2_x + next_x_river_obj;
             y <= river_object_2_y + next_y_river_obj;
+        end else if (draw_river_obj_3) begin
+            // river object 3 flows right at 60 pixels per second
+            // object only moves horizontally
+            river_object_3_x <= river_object_3_x + 1;
+            x <= river_object_3_x + next_x_river_obj;
+            y <= river_object_3_y + next_y_river_obj;
         end else if (draw_score) begin
             x <= 300 + next_x_char;
             y <= 14 + next_y_char;
@@ -461,7 +487,7 @@ module datapath (
         .WIDTH_X(9),
         .WIDTH_Y(9),
         .MAX_X(96),
-        .MAX_Y(40)
+        .MAX_Y(30)
     ) plt_river_obj (
         .clk(clk), .en(draw_river_obj && !plot_done),
         .x(next_x_river_obj), .y(next_y_river_obj),
@@ -572,6 +598,18 @@ module datapath (
         .color_out(river_obj_2_color)
     );
 
+    sprite_ram_module #(
+        .WIDTH_X(4),
+        .WIDTH_Y(3),
+        .RESOLUTION_X(10),
+        .RESOLUTION_Y(6),
+        .MIF_FILE("graphics/river_object_1.mif")
+    ) srm_river_obj_3 (
+        .clk(clk),
+        .x(next_x_river_obj), .y(next_y_river_obj),
+        .color_out(river_obj_1_color)
+    );
+
     // ### Score and life counters. ###
 
     wire [2:0] score_color, lives_color;
@@ -616,8 +654,19 @@ module datapath (
             color = 0;
     end
 
-endmodule // datapath
+endmodule
 
+/**
+................................................................................
+..Datapath_End..................................................................
+................................................................................
+**/
+
+/**
+................................................................................
+..Control.......................................................................
+................................................................................
+**/
 module control (
     clk, reset,
 
@@ -626,7 +675,7 @@ module control (
      frame_tick,
 
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
-    draw_river_obj_1, draw_river_obj_2,
+    draw_river_obj_1, draw_river_obj_2, draw_river_obj_3,
     draw_score, draw_lives,
     erase_frog,
 
@@ -640,7 +689,7 @@ module control (
      input frame_tick;
 
     output reg draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
-    output reg draw_river_obj_1, draw_river_obj_2;
+    output reg draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
     output reg draw_score, draw_lives;
     output reg erase_frog;
      output reg ld_frog_loc;
@@ -660,9 +709,10 @@ module control (
                 S_WAIT_RIVER_OBJ        = 8,    // Wait before drawing river objects.
                 S_DRAW_RIVER_OBJ_1      = 9,    // Draw river object 1.
                 S_DRAW_RIVER_OBJ_2      = 10,   // Draw river object 2.
-                S_WAIT_FROG             = 11,   // Wait before drawing frog.
-                S_DRAW_FROG             = 12,   // Draw frog.
-                S_WAIT_FRAME_TICK       = 13;   // wait for frame tick.
+                S_DRAW_RIVER_OBJ_3      = 11,
+                S_WAIT_FROG             = 12,   // Wait before drawing frog.
+                S_DRAW_FROG             = 13,   // Draw frog.
+                S_WAIT_FRAME_TICK       = 14;   // Wait for frame tick.
                 // S_WAIT_FROG_MOVEMENT    = 13,   // Wait before preceding to movement state.
                 // S_FROG_MOVEMENT         = 14;   // Movement state of frog (When key is pressed).
                 // S_DRAW_FROG             = 12,   // Draw frog.
@@ -693,7 +743,10 @@ module control (
             S_DRAW_RIVER_OBJ_1:
                 next_state = plot_done ? S_DRAW_RIVER_OBJ_2 : S_DRAW_RIVER_OBJ_1;
             S_DRAW_RIVER_OBJ_2:
-                next_state = plot_done ? S_WAIT_FROG : S_DRAW_RIVER_OBJ_2;
+                next_state = plot_done ? S_DRAW_RIVER_OBJ_3 : S_DRAW_RIVER_OBJ_2;
+            // newly added third row of objects
+            S_DRAW_RIVER_OBJ_3:
+                next_state = plot_done ? S_WAIT_FROG : S_DRAW_RIVER_OBJ_3;
 
             // New changes (need to be tested)
             S_WAIT_FROG:
@@ -741,6 +794,7 @@ module control (
         draw_lives = 0;
         draw_river_obj_1 = 0;
         draw_river_obj_2 = 0;
+        draw_river_obj_3 = 0;
         draw_frog = 0;
         erase_frog = 0;
           ld_frog_loc = 0;
@@ -769,6 +823,9 @@ module control (
             S_DRAW_RIVER_OBJ_2: begin
                 draw_river_obj_2 = 1;
             end
+            S_DRAW_RIVER_OBJ_3: begin
+                draw_river_obj_3 = 1;
+            end
             S_ERASE_FROG: begin
                 erase_frog = 1;
             end
@@ -781,7 +838,13 @@ module control (
         endcase
     end
 
-endmodule // control
+endmodule
+
+/**
+................................................................................
+..CONTROL_END...................................................................
+................................................................................
+**/
 
 
 module hex_dec(in, out);
