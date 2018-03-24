@@ -351,6 +351,15 @@ module datapath (
         .out(frame_counter)
     );
 
+    // LFSR (Linear feedback shift register), outputs a random 13 bit number
+    wire [12:0] random_13_bit_num;
+    
+    LFSR lfsr0 (
+      .clock(clk),
+      .reset(reset),
+      .rnd(random_13_bit_num)
+    );
+
     // ### Timing adjustments. ###
 
     always @ (posedge clk) begin
