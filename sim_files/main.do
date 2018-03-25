@@ -18,8 +18,8 @@ force clk 0 0ns, 1 1ns -repeat 2ns
 force reset 1 0ns, 0 4ns
 force score 10#2 0
 force lives 10#8 0
-force go 0 0ns, 1 10ns, 0 15ns, 1 140ns, 0 145ns, 1 300ns, 0 305ns, 1 750ns, 0 755ns, 1 1000ns, 0 1005ns
+force go 0 0ns, 1 10ns, 0 15ns, 1 1700000ns, 0 1700005ns, 1 2500000ns, 0 2500005ns
 
 # Run simulation and zoom into relevant area of waveform.
-run 10000ns
+run 10000000ns
 wave zoom full

@@ -369,11 +369,11 @@ module datapath (
     // Used for spawning river objects. Minimum distance is min_dist, max is
     // min_dist + 15
     wire [3:0] rnd_4_bit_num;
-    LFSR lfsr0 (
-      .clock(clk),
-      .reset(reset),
-      .rnd(rnd_13_bit_num)
-    );
+    // LFSR lfsr0 (
+    //   .clock(clk),
+    //   .reset(reset),
+    //   .rnd(rnd_13_bit_num)
+    // );
 
     // get least significant bit
     assign rnd_4_bit_num = rnd_13_bit_num[3:0];
@@ -436,6 +436,9 @@ module datapath (
             end
             // otherwise do not move the frog's y position
             y <= frog_y + next_y_frog;
+        end else begin
+            x <= next_x_scrn;
+            y <= next_y_scrn;
         end
     end
 //            if(left && next_x_frog - 1 >= 0) begin
@@ -450,10 +453,7 @@ module datapath (
         // end else if (erase_frog) begin
         //         x <= frog_x + next_x_frog;
         //         y <= frog_y + next_y_frog;
-        // end else begin
-        //     x <= next_x_scrn;
-        //     y <= next_y_scrn;
-        // end
+
         //
         //   if (ld_frog_loc) begin
         //         frog_x <= frog_x + right - left;
@@ -738,7 +738,7 @@ module control (
             S_DRAW_SCORE:
                 next_state = plot_done ? S_DRAW_LIVES : S_DRAW_SCORE;
             S_DRAW_LIVES:
-                next_state = plot_done ? S_WAIT_RIVER_OBJ : S_DRAW_LIVES;
+                next_state = plot_done ? S_DRAW_RIVER_OBJ_1 : S_DRAW_LIVES;
             S_WAIT_RIVER_OBJ:
                 next_state = go ? S_DRAW_RIVER_OBJ_1 : S_WAIT_RIVER_OBJ;
             S_DRAW_RIVER_OBJ_1:
@@ -747,7 +747,7 @@ module control (
                 next_state = plot_done ? S_DRAW_RIVER_OBJ_3 : S_DRAW_RIVER_OBJ_2;
             // newly added third row of objects
             S_DRAW_RIVER_OBJ_3:
-                next_state = plot_done ? S_WAIT_FROG : S_DRAW_RIVER_OBJ_3;
+                next_state = plot_done ? S_DRAW_FROG : S_DRAW_RIVER_OBJ_3;
 
             // New changes (need to be tested)
             S_WAIT_FROG:
@@ -755,7 +755,7 @@ module control (
             S_DRAW_FROG:
                 next_state = plot_done ? S_DRAW_GAME_BG : S_DRAW_FROG;
             S_WAIT_FRAME_TICK:
-                next_state = frame_tick ? S_WAIT_GAME_BG : S_WAIT_FRAME_TICK;
+                next_state = frame_tick ? S_DRAW_GAME_BG : S_WAIT_FRAME_TICK;
                 // if(plot_done && mov_key_pressed)
                 //   next_state = S_DRAW_GAME_BG;
                 // else
