@@ -19,14 +19,18 @@ def modelsim_lcd_decoder(file_name: str):
     frame_count = 0
 
     with open(file_name) as f:
-        for line in f.readlines()[3:]:
-            data = parse_line(line, image)
+        for line in f:
+            try:
+                data = parse_line(line, image)
+            except IndexError:
+                continue
             if data and int(data[TIME]) > (frame_count + 1) * FRAME_LENGTH:
                 frame_count += 1
                 print("Processed frame {}.".format(frame_count))
                 image.save("{:05d}.bmp".format(frame_count), "BMP")
 
     frame_count += 1
+    print("Processed frame {} (incomplete).".format(frame_count))
     image.save("{:05d}.bmp".format(frame_count), "BMP")
 
 
