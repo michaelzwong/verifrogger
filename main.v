@@ -387,6 +387,7 @@ module datapath (
         // that is being drawn.
         plot <= draw;
 
+        // starting coordinates of the frog and river objects
         if (reset) begin
             frog_x <= 0;
             frog_y <= 0;
@@ -710,10 +711,11 @@ module control (
                 S_WAIT_RIVER_OBJ        = 8,    // Wait before drawing river objects.
                 S_DRAW_RIVER_OBJ_1      = 9,    // Draw river object 1.
                 S_DRAW_RIVER_OBJ_2      = 10,   // Draw river object 2.
-                S_DRAW_RIVER_OBJ_3      = 11,
-                S_WAIT_FROG             = 12,   // Wait before drawing frog.
-                S_DRAW_FROG             = 13,   // Draw frog.
-                S_WAIT_FRAME_TICK       = 14;   // Wait for frame tick.
+                S_DRAW_RIVER_OBJ_3      = 11,   // Draw river object 3.
+                S_MOVE_RIVER_OBJS       = 12,   // Move river objects.
+                S_WAIT_FROG             = 13,   // Wait before drawing frog.
+                S_DRAW_FROG             = 14,   // Draw frog.
+                S_WAIT_FRAME_TICK       = 15;   // Wait for frame tick.
                 // S_WAIT_FROG_MOVEMENT    = 13,   // Wait before preceding to movement state.
                 // S_FROG_MOVEMENT         = 14;   // Movement state of frog (When key is pressed).
                 // S_DRAW_FROG             = 12,   // Draw frog.
