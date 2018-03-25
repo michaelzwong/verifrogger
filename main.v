@@ -38,7 +38,7 @@ module main_test ();
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
-        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(.draw_river_obj_3),
+        .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(draw_river_obj_3),
         .draw_score(draw_score), .draw_lives(draw_lives), .erase_frog(erase_frog),
 
         .score(score), .lives(lives),
@@ -376,7 +376,7 @@ module datapath (
     );
 
     // get least significant bit
-    rnd_4_bit_num =  rnd_13_bit_num[3:0];
+    assign rnd_4_bit_num = rnd_13_bit_num[3:0];
 
     // ### Timing adjustments. ###
 
@@ -437,6 +437,7 @@ module datapath (
             // otherwise do not move the frog's y position
             y <= frog_y + next_y_frog;
         end
+    end
 //            if(left && next_x_frog - 1 >= 0) begin
 //                x <= next_x_frog  - 1;
 //            end else if(right && next_x_frog + 1 <= 288) begin
@@ -826,12 +827,6 @@ module control (
             S_DRAW_RIVER_OBJ_3: begin
                 draw_river_obj_3 = 1;
             end
-            S_ERASE_FROG: begin
-                erase_frog = 1;
-            end
-                S_LOAD_FROG_LOC: begin
-                    ld_frog_loc = 1;
-                end
             S_DRAW_FROG: begin
                 draw_frog = 1;
             end
