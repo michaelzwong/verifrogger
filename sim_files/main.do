@@ -21,7 +21,7 @@ force lives 10#8 0
 force go 0 0ns, 1 10ns, 0 15ns, 1 1700000ns, 0 1700005ns, 1 2500000ns, 0 2500005ns
 
 # Run simulation and zoom into relevant area of waveform.
-run 100ns
+run 10000000ns
 wave zoom full
 
 # Export data.
