@@ -31,10 +31,11 @@ add wave -bin /d0/row_3_object_3_exists
 
 # Force some possible inputs.
 force clk 0 0ns, 1 1ns -repeat 2ns
-force reset 1 0ns, 0 4ns
+force rnd_reset 1 0ns, 0 5ns
+force reset 0 0ns, 1 100ns, 0 105 ns
 force score 10#2 0
 force lives 10#8 0
-force go 0 0ns, 1 10ns, 0 15ns, 1 1700000ns, 0 1700005ns, 1 2500000ns, 0 2500005ns
+force go 0 0ns, 1 200ns, 0 205ns, 1 1700000ns, 0 1700005ns, 1 2500000ns, 0 2500005ns
 
 force up 0 0
 force left 0 0

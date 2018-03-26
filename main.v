@@ -12,7 +12,7 @@ module main_test ();
 
     // ### Wires. ###
 
-    wire clk, reset;
+    wire clk, reset, rnd_reset;
     wire go;
 
     wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
@@ -41,7 +41,7 @@ module main_test ();
     // ### Datapath and control. ###
 
     datapath d0 (
-        .clk(clk), .reset(reset),
+        .clk(clk), .reset(reset), .rnd_reset(rnd_reset),
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
@@ -127,6 +127,7 @@ module VeriFrogger (
     wire clk = CLOCK_50;
     wire go_key = !KEY[0];
     wire reset = !KEY[3];
+    wire rnd_reset = !KEY[1];
     wire enable = !KEY[2];
 
     wire [3:0] score = SW[3:0];
@@ -226,7 +227,7 @@ module VeriFrogger (
     // ### Datapath and control. ###
 
     datapath d0 (
-        .clk(clk), .reset(reset),
+        .clk(clk), .reset(reset), .rnd_reset(rnd_reset),
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
@@ -339,7 +340,7 @@ endmodule // top
 **/
 
 module datapath (
-    clk, reset,
+    clk, reset, rnd_reset,
 
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
     draw_river_obj_1, draw_river_obj_2, draw_river_obj_3,
@@ -367,7 +368,7 @@ module datapath (
 
     // ### Inputs, outputs and wires. ###
 
-    input clk, reset;
+    input clk, reset, rnd_reset;
 
     input draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     input draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
@@ -475,10 +476,10 @@ module datapath (
 
     // Used for spawning river objects. Minimum distance is min_dist, max is
     // min_dist + 15
-    wire [3:0] rnd_13_bit_num;
+    wire [12:0]rnd_13_bit_num = rnd_generator;
     LFSR lfsr0 (
       .clock(clk),
-      .reset(reset),
+      .reset(rnd_reset),
       .rnd(rnd_generator)
     );
 
@@ -488,7 +489,6 @@ module datapath (
 
     // get the 4 least significant bit
     // used in randomly generating river objects
-    assign rnd_13_bit_num = rnd_generator;
 
     // ### Timing adjustments. ###
 
@@ -506,10 +506,9 @@ module datapath (
         // starting coordinates of the frog and river objects
         if (reset) begin
             frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally
-            frog_y <= 48; // 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
+            frog_y <= 48; //row_1_object_2_exists 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
             river_object_1_x <= 0;  // test spawn value = 20
             river_object_1_y <= 75;   // test spawn value = 80
-
 
             // potential river object
             if (rnd_13_bit_num[0] == 1) begin
