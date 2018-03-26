@@ -4,7 +4,7 @@ vlog -timescale 1ns/1ns main.v
 vsim -L altera_mf_ver -L altera_mf main_test
 
 # Add the signals to waveform.
-add wave -bin clk -bin go
+add wave -bin clk -bin go -bin frame_tick
 add wave -bin /d0/draw
 add wave -bin plot -bin plot_done
 add wave -uns x -uns y -uns color
@@ -12,6 +12,9 @@ add wave -uns /d0/score_color -uns /d0/lives_color
 add wave -uns /d0/nc_score/x_offset -uns /d0/nc_score/x -uns /d0/nc_score/y -uns /d0/nc_score/color_out
 
 add wave -uns /c0/current_state
+
+add wave -uns /d0/frog_x -uns /d0/frog_y -uns /d0/next_x_frog -uns /d0/next_y_frog
+add wave -uns /d0/frame_counter
 
 # Force some possible inputs.
 force clk 0 0ns, 1 1ns -repeat 2ns

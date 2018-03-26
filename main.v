@@ -40,9 +40,17 @@ module main_test ();
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(draw_river_obj_3),
-        .draw_score(draw_score), .draw_lives(draw_lives), .move_objects(move_objects), .erase_frog(erase_frog),
+        .draw_score(draw_score), .draw_lives(draw_lives),
+        .move_objects(move_objects),
+        .erase_frog(erase_frog),
+
+        .ld_frog_loc(ld_frog_loc),
 
         .score(score), .lives(lives),
+
+        .frame_tick(frame_tick),
+
+        .left(left), .right(right), .up(up), .down(down),
 
         .plot_done(plot_done),
 
@@ -52,12 +60,19 @@ module main_test ();
     control c0 (
         .clk(clk), .reset(reset),
 
-        .go(go), .plot_done(plot_done),
+        .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
+
+        .frame_tick(frame_tick),
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(draw_river_obj_3),
-        .draw_score(draw_score), .draw_lives(draw_lives), .move_objects(move_objects), .erase_frog(erase_frog)
+        .draw_score(draw_score), .draw_lives(draw_lives), .move_objects(move_objects),
+        .erase_frog(erase_frog),
+
+        .ld_frog_loc(ld_frog_loc),
+
+        .current_state(current_state)
     );
 
 endmodule // main_test
@@ -199,11 +214,11 @@ module VeriFrogger (
         .move_objects(move_objects),
         .erase_frog(erase_frog),
 
-          .ld_frog_loc(ld_frog_loc),
+        .ld_frog_loc(ld_frog_loc),
 
         .score(score), .lives(lives),
 
-          .frame_tick(frame_tick),
+        .frame_tick(frame_tick),
 
         .left(left), .right(right), .up(up), .down(down),
 
@@ -217,7 +232,7 @@ module VeriFrogger (
 
         .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
 
-          .frame_tick(frame_tick),
+        .frame_tick(frame_tick),
 
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
@@ -300,11 +315,11 @@ module datapath (
     move_objects,
     erase_frog,
 
-     ld_frog_loc,
+    ld_frog_loc,
 
     score, lives,
 
-     frame_tick,
+    frame_tick,
 
     left, right, up, down,
 
@@ -431,7 +446,7 @@ module datapath (
         end else if (draw_frog) begin
             x <= frog_x + next_x_frog;
             y <= frog_y + next_y_frog;
-        end else if(move_objects) begin
+        end else if (move_objects) begin
             // flows right
             river_object_1_x <= river_object_1_x + 1;
             // flows left
@@ -511,8 +526,8 @@ module datapath (
     );
 
     plotter #(
-        .WIDTH_X(5),
-        .WIDTH_Y(5),
+        .WIDTH_X(9),
+        .WIDTH_Y(9),
         .MAX_X(32),
         .MAX_Y(24)
     ) plt_frog (
@@ -686,9 +701,9 @@ endmodule
 module control (
     clk, reset,
 
-     go, plot_done, mov_key_pressed,
+    go, plot_done, mov_key_pressed,
 
-     frame_tick,
+    frame_tick,
 
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
     draw_river_obj_1, draw_river_obj_2, draw_river_obj_3,
@@ -696,14 +711,14 @@ module control (
     move_objects,
     erase_frog,
 
-     ld_frog_loc,
+    ld_frog_loc,
 
-     current_state
+    current_state
 );
 
     input clk, reset;
     input go, plot_done, mov_key_pressed;
-     input frame_tick;
+    input frame_tick;
 
     output reg draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     output reg draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
@@ -773,7 +788,7 @@ module control (
             S_DRAW_FROG:
                 next_state = plot_done ? S_MOVE_OBJECTS : S_DRAW_FROG;
             S_MOVE_OBJECTS:
-                next_state = go ? S_WAIT_FRAME_TICK : S_WAIT_FRAME_TICK;
+                next_state = S_WAIT_FRAME_TICK;
             S_WAIT_FRAME_TICK:
                 next_state = frame_tick ? S_DRAW_GAME_BG : S_WAIT_FRAME_TICK;
                 // if(plot_done && mov_key_pressed)
@@ -818,8 +833,8 @@ module control (
         draw_river_obj_3 = 0;
         draw_frog = 0;
         move_objects = 0;
-        // erase_frog = 0;
-        //   ld_frog_loc = 0;
+        erase_frog = 0;
+        ld_frog_loc = 0;
 
 
         // Set control signals based on state.
