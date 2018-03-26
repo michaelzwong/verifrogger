@@ -13,8 +13,8 @@ PLOT = 6
 # Data.
 FRAME_LENGTH = 1666664000
 
-
 def modelsim_lcd_decoder(file_name: str):
+    multiplier = 1
     image = Image.new("RGB", (320, 240))
     frame_count = 0
     pbar = tqdm(total=FRAME_LENGTH, unit="ps",
@@ -25,12 +25,14 @@ def modelsim_lcd_decoder(file_name: str):
                 data = parse_line(line, image)
             except IndexError:
                 continue
-            if data and int(data[TIME]) > frame_count * FRAME_LENGTH:
-                new_val = int(data[TIME]) - frame_count * FRAME_LENGTH
+            if int(data[TIME]) * multiplier < frame_count * FRAME_LENGTH:
+                multiplier *= 10
+            if data and int(data[TIME]) * multiplier > frame_count * FRAME_LENGTH:
+                new_val = int(data[TIME]) * multiplier - frame_count * FRAME_LENGTH
                 pbar.update(new_val - pbar.n)
                 if pbar.total < pbar.n:
                     pbar.total = pbar.n
-            if data and int(data[TIME]) > (frame_count + 1) * FRAME_LENGTH:
+            if data and int(data[TIME]) * multiplier > (frame_count + 1) * FRAME_LENGTH:
                 pbar.close()
                 frame_count += 1
                 image.save("{:05d}.bmp".format(frame_count), "BMP")
