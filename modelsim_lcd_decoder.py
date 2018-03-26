@@ -37,7 +37,6 @@ def modelsim_lcd_decoder(file_name: str):
                 pbar = tqdm(total=FRAME_LENGTH, unit="ps",
                             desc="Processing frame {}".format(frame_count + 1))
 
-    pbar.total = pbar.n
     pbar.close()
     frame_count += 1
     image.save("{:05d}.bmp".format(frame_count), "BMP")
