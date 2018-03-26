@@ -65,14 +65,14 @@ module main_test ();
 
         .plot(plot), .x(x), .y(y), .color(color),
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
-        .win(win)
+        .win(win), .die(die)
     );
 
     control c0 (
         .clk(clk), .reset(reset),
 
         .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
-        .win(win),
+        .win(win), .die(die),
 
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
 
@@ -132,7 +132,7 @@ module VeriFrogger (
     wire [3:0] score = SW[3:0];
     wire [3:0] lives = SW[7:4];
 
-     reg go;
+    reg go;
 
     wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     wire draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
@@ -362,7 +362,7 @@ module datapath (
     plot, x, y, color,
 
     dne_signal_1, dne_signal_2,
-    win
+    win, die
 );
 
     // ### Inputs, outputs and wires. ###
@@ -396,7 +396,7 @@ module datapath (
     output plot;
     output reg [8:0] x;
     output reg [8:0] y;
-    output win; // indicates that the player won the level
+    output win, die; // indicates that the player won the level, or fell into the water and lost (died)
 
     reg pre_plot;
     wire is_transparent;
@@ -421,9 +421,36 @@ module datapath (
 
      // ### Frog collision detection signals. ###
 
+    // Center of frog is used for these locations, i.e. x = frog_x + 32 /2, y = frog_y + 24 / 2.
+
     wire on_river;
     assign on_river = (frog_y + 32 / 2 > 66) && (frog_y + 32 / 2 < 203); // vertical center of frog within river boundaries
     assign win = frog_y < 66 - 24 - 2; // river top boundary - frog height - a few pixels
+
+    // Check on which river row the frog is.
+    wire on_river_object, on_river_row_1, on_river_row_2, on_river_row_3;
+    assign on_river_row_1 = (frog_y + 32 / 2 > 66) && (frog_y + 32 / 2 <= 111);
+    assign on_river_row_2 = (frog_y + 32 / 2 > 111) && (frog_y + 32 / 2 <= 158);
+    assign on_river_row_1 = (frog_y + 32 / 2 > 158) && (frog_y + 32 / 2 < 203);
+
+    // Check whether the frog is on a river object and on which row.
+    wire on_river_object_row_1, on_river_object_row_2, on_river_object_row_3;
+    assign on_river_object_row_1 = on_river_row_1 && (
+        (frog_x + 24 / 2 > river_object_1_x && frog_x + 24 / 2 < river_object_1_x + 96) ||
+        (frog_x + 24 / 2 > river_object_1_x_2 && frog_x + 24 / 2 < river_object_1_x_2 + 96) ||
+        (frog_x + 24 / 2 > river_object_1_x_3 && frog_x + 24 / 2 < river_object_1_x_3 + 96));
+    assign on_river_object_row_2 = on_river_row_2 && (
+        (frog_x + 24 / 2 > river_object_2_x && frog_x + 24 / 2 < river_object_2_x + 96) ||
+        (frog_x + 24 / 2 > river_object_2_x_2 && frog_x + 24 / 2 < river_object_2_x_2 + 96) ||
+        (frog_x + 24 / 2 > river_object_2_x_3 && frog_x + 24 / 2 < river_object_2_x_3 + 96));
+    assign on_river_object_row_3 = on_river_row_3 && (
+        (frog_x + 24 / 2 > river_object_3_x && frog_x + 24 / 2 < river_object_3_x + 96) ||
+        (frog_x + 24 / 2 > river_object_3_x_2 && frog_x + 24 / 2 < river_object_3_x_2 + 96) ||
+        (frog_x + 24 / 2 > river_object_3_x_3 && frog_x + 24 / 2 < river_object_3_x_3 + 96));
+
+    assign on_river_object = on_river_object_row_1 || on_river_object_row_2 || on_river_object_row_3;
+
+    assign die = on_river && !on_river_object;
 
      // ### Counter to delay the keyboard. ###
 
@@ -461,6 +488,10 @@ module datapath (
     assign rnd_4_bit_num = rnd_13_bit_num[3:0];
 
     // ### Timing adjustments. ###
+
+    wire new_frog_x, new_frog_y;
+    assign new_frog_x = frog_x + right - left + on_river_object_row_1 - on_river_object_row_2 + on_river_object_row_3;
+    assign new_frog_y = frog_y + down - left;
 
     always @ (posedge clk) begin
         // Plot signal, x and y need to be delayed by one clock cycle
@@ -646,15 +677,15 @@ module datapath (
               river_object_3_y_3 <= river_object_3_y_3 + 1;
             end
             // check left and right boundaries (max x = resolution width - frog width - 1)
-            if ((frog_x + right - left >= 0) && (frog_x + right - left <= 320 - 32 - 1)) begin
+            if ((new_frog_x >= 0) && (new_frog_x <= 320 - 32 - 1)) begin
                 // update top left pixel's x coordinate if possible
-                frog_x <= frog_x + right - left;
+                frog_x <= new_frog_x;
             end
 
             // check up and down boundaries (max y = resolution height - frog height - 1)
-            if ((frog_y - up + down >= 0) && (frog_y - up + down <= 240 - 24 - 1)) begin
+            if ((new_frog_y >= 0) && (new_frog_y <= 240 - 24 - 1)) begin
                 // update top left pixel's y coordinate if possible
-                frog_y <= frog_y - up + down;
+                frog_y <= new_frog_y;
             end
 
         end else begin
@@ -852,7 +883,7 @@ module datapath (
 
     // ### Color mux. ###
 
-    assign is_transparent = draw_frog && frog_color == 0; 
+    assign is_transparent = draw_frog && frog_color == 0;
 
     always @ (*) begin
         // Color is set based on which draw signal is high.
@@ -895,7 +926,7 @@ module control (
     clk, reset,
 
     go, plot_done, mov_key_pressed,
-    win,
+    win, die,
 
     dne_signal_1, dne_signal_2,
 
@@ -918,7 +949,7 @@ module control (
     input clk, reset;
     input go, plot_done, mov_key_pressed;
     input dne_signal_1, dne_signal_2;
-    input win;
+    input win, die;
     input frame_tick;
 
     output reg draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
@@ -930,7 +961,7 @@ module control (
 
     output reg draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
 
-     output reg [4:0] current_state;
+    output reg [4:0] current_state;
     reg [4:0] next_state;
 
     // States.
