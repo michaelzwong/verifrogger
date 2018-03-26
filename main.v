@@ -20,9 +20,14 @@ module main_test ();
     wire erase_frog;
     wire move_objects;
 
+    wire draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
+
+
     wire [3:0] score, lives;
 
     wire plot_done;
+
+    wire dne_signal_1, dne_signal_2;
 
     wire plot;
     wire [8:0] x, y;
@@ -44,6 +49,9 @@ module main_test ();
         .move_objects(move_objects),
         .erase_frog(erase_frog),
 
+        .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
+        .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
+
         .ld_frog_loc(ld_frog_loc),
 
         .score(score), .lives(lives),
@@ -54,13 +62,16 @@ module main_test ();
 
         .plot_done(plot_done),
 
-        .plot(plot), .x(x), .y(y), .color(color)
+        .plot(plot), .x(x), .y(y), .color(color),
+        .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2)
     );
 
     control c0 (
         .clk(clk), .reset(reset),
 
         .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
+
+        .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
 
         .frame_tick(frame_tick),
 
@@ -71,6 +82,9 @@ module main_test ();
         .erase_frog(erase_frog),
 
         .ld_frog_loc(ld_frog_loc),
+
+        .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
+        .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
 
         .current_state(current_state)
     );
@@ -123,7 +137,11 @@ module VeriFrogger (
     wire erase_frog;
     wire move_objects;
 
+    wire draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
+
     wire plot_done;
+
+    wire dne_signal_1, dne_signal_2;
 
     wire plot;
     wire [8:0] x, y;
@@ -188,7 +206,7 @@ module VeriFrogger (
 
     // ### Debug stuff. ###
 
-     wire [3:0] current_state;
+     wire [4:0] current_state;
 
      hex_dec hd0 (.in(current_state), .out(HEX0));
 
@@ -214,6 +232,9 @@ module VeriFrogger (
         .move_objects(move_objects),
         .erase_frog(erase_frog),
 
+        .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
+        .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
+
         .ld_frog_loc(ld_frog_loc),
 
         .score(score), .lives(lives),
@@ -224,13 +245,17 @@ module VeriFrogger (
 
         .plot_done(plot_done),
 
-        .plot(plot), .x(x), .y(y), .color(color)
+        .plot(plot), .x(x), .y(y), .color(color),
+
+        .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2)
     );
 
     control c0 (
         .clk(clk), .reset(reset),
 
         .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
+
+        .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
 
         .frame_tick(frame_tick),
 
@@ -241,6 +266,10 @@ module VeriFrogger (
         .erase_frog(erase_frog),
 
           .ld_frog_loc(ld_frog_loc),
+
+          .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
+          .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
+
 
           .current_state(current_state)
     );
@@ -315,6 +344,8 @@ module datapath (
     move_objects,
     erase_frog,
 
+    draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3,
+
     ld_frog_loc,
 
     score, lives,
@@ -325,7 +356,9 @@ module datapath (
 
     plot_done,
 
-    plot, x, y, color
+    plot, x, y, color,
+
+    dne_signal_1, dne_signal_1
 );
 
     // ### Inputs, outputs and wires. ###
@@ -344,6 +377,10 @@ module datapath (
     input left, right, up, down;
 
     output plot_done;
+
+    // does not exist signal 1 and 2, alternate usage to prevent timing issues
+    output reg dne_signal_1, dne_signal_2;
+
     wire plot_done_scrn, plot_done_char, plot_done_river_obj, plot_done_frog;
     assign plot_done = plot_done_scrn || plot_done_char || plot_done_river_obj || plot_done_frog;
 
@@ -363,6 +400,8 @@ module datapath (
     reg [8:0] river_object_2_x, river_object_2_y;
     // third row of river objects
     reg [8:0] river_object_3_x, river_object_3_y;
+
+    wire draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
 
     wire draw, draw_scrn, draw_char, draw_river_obj;
     assign draw = draw_scrn || draw_char || draw_river_obj || draw_frog || erase_frog;
@@ -384,18 +423,25 @@ module datapath (
     );
 
     // LFSR (Linear feedback shift register), outputs a random 13 bit number
+    // bits [5:0] determine if additional random objects are generated
+    //
     wire [12:0] rnd_13_bit_num;
 
     // Used for spawning river objects. Minimum distance is min_dist, max is
     // min_dist + 15
     wire [3:0] rnd_4_bit_num;
-    // LFSR lfsr0 (
-    //   .clock(clk),
-    //   .reset(reset),
-    //   .rnd(rnd_13_bit_num)
-    // );
+    LFSR lfsr0 (
+      .clock(clk),
+      .reset(reset),
+      .rnd(rnd_13_bit_num)
+    );
+
+    wire row_1_object_2_exists, row_1_object_3_exists;
+    wire row_2_object_2_exists, row_2_object_3_exists;
+    wire row_3_object_2_exists, row_2_object_3_exists;
 
     // get the 4 least significant bit
+    // used in randomly generating river objects
     assign rnd_4_bit_num = rnd_13_bit_num[3:0];
 
     // ### Timing adjustments. ###
@@ -411,19 +457,66 @@ module datapath (
         if (reset) begin
             frog_x <= 0;
             frog_y <= 0;
+
+            /** First row of river object(s) **/
             river_object_1_x <= 0;  // test spawn value = 20
             river_object_1_y <= 75;   // test spawn value = 80
+
+            // potential river object
+            if (rnd_13_bit_num[0] == 1) begin
+              row_1_object_2_exists <= 1;
+              river_object_1_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[12:9]; // 96 + 10 + X, X < 16
+              river_object_1_y_2 <= 75;
+            end
+
+            // potential river object
+            if (rnd_13_bit_num[1] == 1) begin
+              row_1_object_3_exists <= 1;
+              river_object_1_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[9:6]; // 96 + 10 + X, X < 16
+              river_object_1_y_3 <= 75;
+            end
+
+            /** Second row of river object(s) **/
             river_object_2_x <= 319;  // test spawn value = 120
             river_object_2_y <= 115;  // test spawn value = 150
+
+            // potential river object
+            if (rnd_13_bit_num[2] == 1) begin
+              row_2_object_2_exists <= 1;
+              river_object_2_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[6:3];
+              river_object_2_y_2 <= 115;
+            end
+
+            // potential river object
+            if (rnd_13_bit_num[3] == 1) begin
+              row_2_object_3_exists <= 1;
+              river_object_2_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[3:0];
+              river_object_2_y_3 <= 115;
+            end
+
+            /** Third row of river object(s) **/
             river_object_3_x <=  0;
             river_object_3_y <= 155;
+
+            // potential river object
+            if (rnd_13_bit_num[4] == 1) begin
+              row_3_object_2_exists <= 1;
+              river_object_3_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[11:8];
+              river_object_3_y_2 <= 155;
+            end
+
+            // potential river object
+            if (rnd_13_bit_num[5] == 1) begin
+              row_3_object_3_exists <= 1;
+              river_object_3_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[8:3];
+              river_object_3_y_3 <= 0;
+            end
 
         end else if (draw_river_obj_1) begin
             // river object 1 flows right at 60 pixels per second
             // object only moves horizontally
             x <= river_object_1_x + next_x_river_obj;
             y <= river_object_1_y + next_y_river_obj;
-
 
         end else if (draw_river_obj_2) begin
             // river object 2 flows left at 60 pixels per second
@@ -437,6 +530,60 @@ module datapath (
             x <= river_object_3_x + next_x_river_obj;
             y <= river_object_3_y + next_y_river_obj;
             // move the river object for the next frame
+
+        end else if (draw_pot_obj_1_2) begin
+            dne_signal_2 <= 0;
+            if (row_1_object_2_exists) begin
+              x <= river_object_1_x_2 + next_x_river_obj;
+              y <= river_object_1_y_2 + next_y_river_obj;
+            end else begin
+              dne_signal_1 <= 1;
+            end
+
+        end else if (draw_pot_obj_1_3) begin
+            dne_signal_1 <= 0;
+            if (row_1_object_3_exists) begin
+              x <= river_object_1_x_3 + next_x_river_obj;
+              y <= river_object_1_y_3 + next_y_river_obj;
+            end else begin
+              dne_signal_2 <= 1;
+            end
+
+        end else if (draw_pot_obj_2_2) begin
+            dne_signal_2 <= 0;
+            if (row_2_object_2_exists) begin
+              x <= river_object_2_x_2 + next_x_river_obj;
+              y <= river_object_2_y_2 + next_y_river_obj;
+            end else begin
+              dne_signal_1 <= 1;
+            end
+
+        end else if (draw_pot_obj_2_3) begin
+            dne_signal_1 <= 0;
+            if (row_2_object_3_exists) begin
+              x <= river_object_2_x_3 + next_x_river_obj;
+              y <= river_object_2_y_3 + next_y_river_obj;
+            end else begin
+              dne_signal_2 <= 1;
+            end
+
+        end else if (draw_pot_obj_3_2) begin
+            dne_signal_2 <= 0;
+            if (row_3_object_2_exists) begin
+              x <= river_object_3_x_2 + next_x_river_obj;
+              y <= river_object_3_y_2 + next_y_river_obj;
+            end else begin
+              dne_signal_1 <= 1;
+            end
+        end else if (draw_pot_obj_3_3) begin
+              dne_signal_1 <= 0;
+            if (row_3_object_3_exists) begin
+              x <= river_object_3_x_3 + next_x_river_obj;
+              y <= river_object_3_y_3 + next_y_river_obj;
+            end else begin
+              dne_signal_2 <= 1;
+            end
+
         end else if (draw_score) begin
             x <= 300 + next_x_char;
             y <= 14 + next_y_char;
@@ -454,6 +601,36 @@ module datapath (
             // flows right
             river_object_3_x <= river_object_3_x + 1;
 
+
+            if(row_1_object_2_exists) begin
+              river_object_1_x_2 <= river_object_1_x_2 + 1;
+              river_object_1_y_2 <= river_object_1_y_2 + 1;
+            end
+
+            if(row_1_object_3_exists) begin
+              river_object_1_x_3 <= river_object_1_x_3 + 1;
+              river_object_1_y_3 <= river_object_1_y_3 + 1;
+            end
+
+            if(row_2_object_2_exists) begin
+              river_object_2_x_2 <= river_object_2_x_2 - 1;
+              river_object_2_y_2 <= river_object_2_y_2 - 1;
+            end
+
+            if(row_2_object_3_exists) begin
+              river_object_2_x_3 <= river_object_2_x_3 - 1;
+              river_object_2_y_3 <= river_object_2_y_3 - 1;
+            end
+
+            if(row_3_object_2_exists) begin
+              river_object_3_x_2 <= river_object_3_x_2 + 1;
+              river_object_3_y_2 <= river_object_3_y_2 + 1;
+            end
+
+            if(row_3_object_3_exists) begin
+              river_object_3_x_3 <= river_object_3_x_3 + 1;
+              river_object_3_y_3 <= river_object_3_y_3 + 1;
+            end
             // check left and right boundaries (max x = resolution width - frog width - 1)
             if((frog_x + right - left >= 0) && (frog_x + right - left <= 320 - 32 - 1)) begin
                 // update top left pixel's x coordinate if possible
@@ -703,6 +880,8 @@ module control (
 
     go, plot_done, mov_key_pressed,
 
+    dne_signal_1, dne_signal_2,
+
     frame_tick,
 
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
@@ -713,11 +892,15 @@ module control (
 
     ld_frog_loc,
 
+    draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3,
+
+
     current_state
 );
 
     input clk, reset;
     input go, plot_done, mov_key_pressed;
+    input dne_signal_1, dne_signal_2;
     input frame_tick;
 
     output reg draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
@@ -727,8 +910,10 @@ module control (
     output reg erase_frog;
      output reg ld_frog_loc;
 
-     output reg [3:0] current_state;
-    reg [3:0] next_state;
+    output reg draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
+
+     output reg [4:0] current_state;
+    reg [4:0] next_state;
 
     // States.
     localparam  S_WAIT_START            = 0,    // Wait before drawing START screen.
@@ -741,12 +926,18 @@ module control (
                 S_DRAW_LIVES            = 7,    // Draw lives counter.
                 S_WAIT_RIVER_OBJ        = 8,    // Wait before drawing river objects.
                 S_DRAW_RIVER_OBJ_1      = 9,    // Draw river object 1.
-                S_DRAW_RIVER_OBJ_2      = 10,   // Draw river object 2.
-                S_DRAW_RIVER_OBJ_3      = 11,   // Draw river object 3.
-                S_WAIT_FROG             = 12,   // Wait before drawing frog.
-                S_DRAW_FROG             = 13,   // Draw frog.
-                S_MOVE_OBJECTS           = 14,   // Move objects for the next cycle. (One cycle is from state 4 to 15)
-                S_WAIT_FRAME_TICK       = 15;   // Wait for frame tick.
+                  S_DRAW_POT_OBJ_1_2      = 10,   // Potential river object 2 (1).
+                  S_DRAW_POT_OBJ_1_3      = 11,   // Potential river object 3 (1).
+                S_DRAW_RIVER_OBJ_2      = 12,   // Draw river object 2.
+                  S_DRAW_POT_OBJ_2_2      = 13,   // Potential river object 2 (2).
+                  S_DRAW_POT_OBJ_2_3      = 14,   // Potential river object 3 (2).
+                S_DRAW_RIVER_OBJ_3      = 15,   // Draw river object 3.
+                  S_DRAW_POT_OBJ_3_2      = 16,   // Potential river object 2 (3).
+                  S_DRAW_POT_OBJ_3_3      = 17,   // Potential river object 3 (3).
+                S_WAIT_FROG             = 18,   // Wait before drawing frog.
+                S_DRAW_FROG             = 19,   // Draw frog.
+                S_MOVE_OBJECTS           = 20,   // Move objects for the next cycle. (One cycle is from state 4 to 15)
+                S_WAIT_FRAME_TICK       = 21;   // Wait for frame tick.
                 // S_WAIT_FROG_MOVEMENT    = 13,   // Wait before preceding to movement state.
                 // S_FROG_MOVEMENT         = 14;   // Movement state of frog (When key is pressed).
                 // S_DRAW_FROG             = 12,   // Draw frog.
@@ -780,7 +971,62 @@ module control (
                 next_state = plot_done ? S_DRAW_RIVER_OBJ_3 : S_DRAW_RIVER_OBJ_2;
             // newly added third row of objects
             S_DRAW_RIVER_OBJ_3:
-                next_state = plot_done ? S_DRAW_FROG : S_DRAW_RIVER_OBJ_3;
+                next_state = plot_done ? S_DRAW_POT_OBJ_1_2 : S_DRAW_RIVER_OBJ_3;
+
+            // potential river objects
+            S_DRAW_POT_OBJ_1_2:
+                if(dne_signal_1 || plot_done) begin
+                  next_state = S_DRAW_POT_OBJ_1_3;
+                end else begin
+                  next_state = S_DRAW_POT_OBJ_1_2;
+                end
+                // next_state = plot_done ? S_DRAW_POT_OBJ_1_3 : S_DRAW_POT_OBJ_1_2;
+
+            // potential river objects
+            S_DRAW_POT_OBJ_1_3:
+
+              if(dne_signal_2 || plot_done) begin
+                next_state = S_DRAW_POT_OBJ_2_2;
+              end else begin
+                next_state = S_DRAW_POT_OBJ_1_3;
+              end
+                // next_state = plot_done ? S_DRAW_POT_OBJ_2_2 : S_DRAW_POT_OBJ_1_3;
+
+            S_DRAW_POT_OBJ_2_2:
+
+              if(dne_signal_1 || plot_done) begin
+                next_state = S_DRAW_POT_OBJ_2_3;
+              end else begin
+                next_state = S_DRAW_POT_OBJ_2_2;
+              end
+                // next_state = plot_done ? S_DRAW_POT_OBJ_2_3 : S_DRAW_POT_OBJ_2_2;
+
+            S_DRAW_POT_OBJ_2_3:
+
+              if(dne_signal_2 || plot_done) begin
+                next_state = S_DRAW_POT_OBJ_3_2;
+              end else begin
+                next_state = S_DRAW_POT_OBJ_2_3;
+              end
+                // next_state = plot_done ? S_DRAW_POT_OBJ_3_2 : S_DRAW_POT_OBJ_2_3;
+
+            S_DRAW_POT_OBJ_3_2:
+
+              if(dne_signal_1 || plot_done) begin
+                next_state = S_DRAW_POT_OBJ_3_3;
+              end else begin
+                next_state = S_DRAW_POT_OBJ_3_2;
+              end
+                // next_state = plot_done ? S_DRAW_POT_OBJ_3_3 : S_DRAW_POT_OBJ_3_2;
+
+            S_DRAW_POT_OBJ_3_3:
+
+              if(dne_signal_2 || plot_done) begin
+                next_state = S_DRAW_FROG;
+              end else begin
+                next_state = S_DRAW_POT_OBJ_3_3;
+              end
+                // next_state = plot_done ? S_DRAW_FROG : S_DRAW_POT_OBJ_3_3;
 
             // New changes (need to be tested)
             S_WAIT_FROG:
@@ -836,6 +1082,12 @@ module control (
         erase_frog = 0;
         ld_frog_loc = 0;
 
+        draw_pot_obj_1_2 = 0;
+        draw_pot_obj_1_3 = 0;
+        draw_pot_obj_2_2 = 0;
+        draw_pot_obj_2_3 = 0;
+        draw_pot_obj_3_2 = 0;
+        draw_pot_obj_3_3 = 0;
 
         // Set control signals based on state.
         case (current_state)
@@ -869,6 +1121,31 @@ module control (
             S_MOVE_OBJECTS: begin
                 move_objects = 1;
             end
+
+            S_DRAW_POT_OBJ_1_2: begin
+                draw_pot_obj_1_2 = 1;
+            end
+
+            S_DRAW_POT_OBJ_1_3: begin
+                draw_pot_obj_1_3 = 1;
+            end
+
+            S_DRAW_POT_OBJ_2_2: begin
+                draw_pot_obj_2_2 = 1;
+            end
+
+            S_DRAW_POT_OBJ_2_3: begin
+                draw_pot_obj_2_3 = 1;
+            end
+
+            S_DRAW_POT_OBJ_3_2: begin
+                draw_pot_obj_3_2 = 1;
+            end
+
+            S_DRAW_POT_OBJ_3_3: begin
+                draw_pot_obj_3_3 = 1;
+            end
+
         endcase
     end
 
