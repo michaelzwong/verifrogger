@@ -15,6 +15,8 @@ module main_test ();
     wire clk, reset, rnd_reset;
     wire go;
 
+    wire [1:0] rate;
+
     wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     wire draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
     wire draw_score, draw_lives;
@@ -52,6 +54,8 @@ module main_test ();
 
         .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
         .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
+
+        .rate(rate),
 
         .ld_frog_loc(ld_frog_loc),
 
@@ -132,6 +136,7 @@ module VeriFrogger (
 
     wire [3:0] score = SW[3:0];
     wire [3:0] lives = SW[7:4];
+    wire [1:0] rate = SW[9:8];
 
     reg go;
 
@@ -239,6 +244,7 @@ module VeriFrogger (
         .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
         .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
 
+        .rate(rate),
         .ld_frog_loc(ld_frog_loc),
 
         .score(score), .lives(lives),
@@ -350,6 +356,8 @@ module datapath (
 
     draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3,
 
+    rate,
+
     ld_frog_loc,
 
     score, lives,
@@ -377,6 +385,8 @@ module datapath (
     input move_objects;
     input erase_frog;
     input ld_frog_loc;
+
+    input [1:0] rate;
 
     input [3:0] score, lives;
 
