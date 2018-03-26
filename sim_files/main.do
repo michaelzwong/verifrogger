@@ -17,6 +17,18 @@ add wave -uns /d0/frog_x -uns /d0/frog_y -uns /d0/next_x_frog -uns /d0/next_y_fr
 add wave -uns /d0/frame_counter
 add wave -bin win -bin /d0/on_river
 
+add wave -bin /d0/dne_signal_1
+add wave -bin /d0/dne_signal_2
+
+add wave -bin /d0/rnd_13_bit_num
+
+add wave -bin /d0/row_1_object_2_exists
+add wave -bin /d0/row_1_object_3_exists
+add wave -bin /d0/row_2_object_2_exists
+add wave -bin /d0/row_2_object_3_exists
+add wave -bin /d0/row_3_object_2_exists
+add wave -bin /d0/row_3_object_3_exists
+
 # Force some possible inputs.
 force clk 0 0ns, 1 1ns -repeat 2ns
 force reset 1 0ns, 0 4ns

@@ -471,15 +471,15 @@ module datapath (
     // LFSR (Linear feedback shift register), outputs a random 13 bit number
     // bits [5:0] determine if additional random objects are generated
     //
-    wire [12:0] rnd_13_bit_num;
+    wire [12:0] rnd_generator;
 
     // Used for spawning river objects. Minimum distance is min_dist, max is
     // min_dist + 15
-    wire [3:0] rnd_4_bit_num;
+    wire [3:0] rnd_13_bit_num;
     LFSR lfsr0 (
       .clock(clk),
       .reset(reset),
-      .rnd(rnd_13_bit_num)
+      .rnd(rnd_generator)
     );
 
     reg row_1_object_2_exists, row_1_object_3_exists;
@@ -488,7 +488,7 @@ module datapath (
 
     // get the 4 least significant bit
     // used in randomly generating river objects
-    assign rnd_4_bit_num = rnd_13_bit_num[3:0];
+    assign rnd_13_bit_num = rnd_generator;
 
     // ### Timing adjustments. ###
 
@@ -510,11 +510,14 @@ module datapath (
             river_object_1_x <= 0;  // test spawn value = 20
             river_object_1_y <= 75;   // test spawn value = 80
 
+
             // potential river object
             if (rnd_13_bit_num[0] == 1) begin
               row_1_object_2_exists <= 1;
               river_object_1_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[12:9]; // 96 + 10 + X, X < 16
               river_object_1_y_2 <= 75;
+            end else begin
+              row_1_object_2_exists <= 0;
             end
 
             // potential river object
@@ -522,6 +525,8 @@ module datapath (
               row_1_object_3_exists <= 1;
               river_object_1_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[9:6]; // 96 + 10 + X, X < 16
               river_object_1_y_3 <= 75;
+            end else begin
+              row_1_object_3_exists <= 0;
             end
 
             /** Second row of river object(s) **/
@@ -533,6 +538,8 @@ module datapath (
               row_2_object_2_exists <= 1;
               river_object_2_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[6:3];
               river_object_2_y_2 <= 115;
+            end else begin
+              row_2_object_2_exists <= 0;
             end
 
             // potential river object
@@ -540,6 +547,8 @@ module datapath (
               row_2_object_3_exists <= 1;
               river_object_2_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[3:0];
               river_object_2_y_3 <= 115;
+            end else begin
+              row_2_object_3_exists <= 0;
             end
 
             /** Third row of river object(s) **/
@@ -551,6 +560,8 @@ module datapath (
               row_3_object_2_exists <= 1;
               river_object_3_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[11:8];
               river_object_3_y_2 <= 155;
+            end else begin
+              row_3_object_2_exists <= 0;
             end
 
             // potential river object
@@ -558,6 +569,8 @@ module datapath (
               row_3_object_3_exists <= 1;
               river_object_3_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[8:3];
               river_object_3_y_3 <= 0;
+            end else begin
+              row_3_object_3_exists <= 0;
             end
 
         end else if (draw_river_obj_1) begin
