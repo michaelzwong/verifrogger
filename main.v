@@ -354,10 +354,14 @@ module datapath (
     wire [8:0] next_y_scrn, next_y_char, next_y_river_obj, next_y_frog;
     output reg [2:0] color;
 
-    output reg plot;
+    output plot;
     output reg [8:0] x;
     output reg [8:0] y;
     output win; // indicates that the player won the level
+
+    reg pre_plot;
+    wire is_transparent;
+    assign plot = pre_plot && !is_transparent;
 
     // top left coordinates of objects in the game
     reg [8:0] frog_x, frog_y;
@@ -415,7 +419,7 @@ module datapath (
         // due to delay of retrieving data from memory.
         // The x and y offsets specify the top left corner of the sprite
         // that is being drawn.
-        plot <= draw;
+        pre_plot <= draw;
 
         // starting coordinates of the frog and river objects
         if (reset) begin
@@ -670,6 +674,8 @@ module datapath (
     );
 
     // ### Color mux. ###
+
+    assign is_transparent = draw_frog && frog_color == 0; 
 
     always @ (*) begin
         // Color is set based on which draw signal is high.
