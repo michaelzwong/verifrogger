@@ -63,13 +63,15 @@ module main_test ();
         .plot_done(plot_done),
 
         .plot(plot), .x(x), .y(y), .color(color),
-        .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2)
+        .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
+        .win(win)
     );
 
     control c0 (
         .clk(clk), .reset(reset),
 
         .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
+        .win(win),
 
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
 
@@ -358,7 +360,8 @@ module datapath (
 
     plot, x, y, color,
 
-    dne_signal_1, dne_signal_1
+    dne_signal_1, dne_signal_1,
+    win
 );
 
     // ### Inputs, outputs and wires. ###
@@ -370,7 +373,7 @@ module datapath (
     input draw_score, draw_lives;
     input move_objects;
     input erase_frog;
-      input ld_frog_loc;
+    input ld_frog_loc;
 
     input [3:0] score, lives;
 
@@ -391,6 +394,7 @@ module datapath (
     output reg plot;
     output reg [8:0] x;
     output reg [8:0] y;
+    output win; // indicates that the player won the level
 
     // top left coordinates of objects in the game
     reg [8:0] frog_x, frog_y;
@@ -408,6 +412,12 @@ module datapath (
     assign draw_scrn = draw_scrn_start || draw_scrn_game_over || draw_scrn_game_bg;
     assign draw_char = draw_score || draw_lives;
     assign draw_river_obj = draw_river_obj_1 || draw_river_obj_2 || draw_river_obj_3;
+
+     // ### Frog collision detection signals. ###
+
+    wire on_river;
+    assign on_river = (frog_y + 32 / 2 > 66) && (frog_y + 32 / 2 < 203); // vertical center of frog within river boundaries
+    assign win = frog_y < 66 - 24 - 2; // river top boundary - frog height - a few pixels
 
      // ### Counter to delay the keyboard. ###
 
@@ -455,10 +465,8 @@ module datapath (
 
         // starting coordinates of the frog and river objects
         if (reset) begin
-            frog_x <= 0;
-            frog_y <= 0;
-
-            /** First row of river object(s) **/
+            frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally
+            frog_y <= 48; // 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
             river_object_1_x <= 0;  // test spawn value = 20
             river_object_1_y <= 75;   // test spawn value = 80
 
@@ -586,10 +594,10 @@ module datapath (
 
         end else if (draw_score) begin
             x <= 300 + next_x_char;
-            y <= 14 + next_y_char;
+            y <= 8 + next_y_char;
         end else if (draw_lives) begin
             x <= 300 + next_x_char;
-            y <= 27 + next_y_char;
+            y <= 23 + next_y_char;
         end else if (draw_frog) begin
             x <= frog_x + next_x_frog;
             y <= frog_y + next_y_frog;
@@ -632,13 +640,13 @@ module datapath (
               river_object_3_y_3 <= river_object_3_y_3 + 1;
             end
             // check left and right boundaries (max x = resolution width - frog width - 1)
-            if((frog_x + right - left >= 0) && (frog_x + right - left <= 320 - 32 - 1)) begin
+            if ((frog_x + right - left >= 0) && (frog_x + right - left <= 320 - 32 - 1)) begin
                 // update top left pixel's x coordinate if possible
                 frog_x <= frog_x + right - left;
             end
 
             // check up and down boundaries (max y = resolution height - frog height - 1)
-            if ((next_y_frog - up + down >= 0) && (next_y_frog - up + down <= 240 - 24 - 1)) begin
+            if ((frog_y - up + down >= 0) && (frog_y - up + down <= 240 - 24 - 1)) begin
                 // update top left pixel's y coordinate if possible
                 frog_y <= frog_y - up + down;
             end
@@ -879,6 +887,7 @@ module control (
     clk, reset,
 
     go, plot_done, mov_key_pressed,
+    win,
 
     dne_signal_1, dne_signal_2,
 
@@ -901,6 +910,7 @@ module control (
     input clk, reset;
     input go, plot_done, mov_key_pressed;
     input dne_signal_1, dne_signal_2;
+    input win;
     input frame_tick;
 
     output reg draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
@@ -908,7 +918,7 @@ module control (
     output reg draw_score, draw_lives;
     output reg move_objects;
     output reg erase_frog;
-     output reg ld_frog_loc;
+    output reg ld_frog_loc;
 
     output reg draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
 

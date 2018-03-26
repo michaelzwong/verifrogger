@@ -82,7 +82,7 @@ module numchar_ram_module (
     output [2:0] color_out;
 
     wire [7:0] x_offset;
-    assign x_offset = numchar * 10;
+    assign x_offset = numchar * 7;
 
     // ### SRM containing each numerical character. ###
 
