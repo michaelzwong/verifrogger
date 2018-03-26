@@ -47,8 +47,8 @@ def parse_line(line: str, image: Image):
     location = parse_location(data[X], data[Y])
     color = parse_color(data[COLOR])
 
-    if data[PLOT] == 0 or not location or not color:
-        return
+    if data[PLOT] == '0' or not location or not color:
+        return data
 
     if (0, 0) <= location < (319, 239):
         # print(location)
