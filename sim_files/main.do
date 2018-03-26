@@ -15,6 +15,7 @@ add wave -uns /c0/current_state
 
 add wave -uns /d0/frog_x -uns /d0/frog_y -uns /d0/next_x_frog -uns /d0/next_y_frog
 add wave -uns /d0/frame_counter
+add wave -bin win -bin /d0/on_river
 
 # Force some possible inputs.
 force clk 0 0ns, 1 1ns -repeat 2ns
@@ -26,7 +27,7 @@ force go 0 0ns, 1 10ns, 0 15ns, 1 1700000ns, 0 1700005ns, 1 2500000ns, 0 2500005
 force up 0 0
 force left 0 0
 force down 1 0
-force right 1 0
+force right 0 0
 
 # Run simulation and zoom into relevant area of waveform.
 run 10000000ns

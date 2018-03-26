@@ -54,13 +54,15 @@ module main_test ();
 
         .plot_done(plot_done),
 
-        .plot(plot), .x(x), .y(y), .color(color)
+        .plot(plot), .x(x), .y(y), .color(color),
+        .win(win)
     );
 
     control c0 (
         .clk(clk), .reset(reset),
 
         .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
+        .win(win),
 
         .frame_tick(frame_tick),
 
@@ -325,7 +327,8 @@ module datapath (
 
     plot_done,
 
-    plot, x, y, color
+    plot, x, y, color,
+    win
 );
 
     // ### Inputs, outputs and wires. ###
@@ -337,7 +340,7 @@ module datapath (
     input draw_score, draw_lives;
     input move_objects;
     input erase_frog;
-      input ld_frog_loc;
+    input ld_frog_loc;
 
     input [3:0] score, lives;
 
@@ -354,6 +357,7 @@ module datapath (
     output reg plot;
     output reg [8:0] x;
     output reg [8:0] y;
+    output win; // indicates that the player won the level
 
     // top left coordinates of objects in the game
     reg [8:0] frog_x, frog_y;
@@ -369,6 +373,12 @@ module datapath (
     assign draw_scrn = draw_scrn_start || draw_scrn_game_over || draw_scrn_game_bg;
     assign draw_char = draw_score || draw_lives;
     assign draw_river_obj = draw_river_obj_1 || draw_river_obj_2 || draw_river_obj_3;
+
+     // ### Frog collision detection signals. ###
+
+    wire on_river;
+    assign on_river = (frog_y + 32 / 2 > 66) && (frog_y + 32 / 2 < 203); // vertical center of frog within river boundaries
+    assign win = frog_y < 66 - 24 - 2; // river top boundary - frog height - a few pixels
 
      // ### Counter to delay the keyboard. ###
 
@@ -409,8 +419,8 @@ module datapath (
 
         // starting coordinates of the frog and river objects
         if (reset) begin
-            frog_x <= 0;
-            frog_y <= 0;
+            frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally 
+            frog_y <= 48; // 240 - 24 - 5; // spawn frog a few pixels from the bottom edge 
             river_object_1_x <= 0;  // test spawn value = 20
             river_object_1_y <= 75;   // test spawn value = 80
             river_object_2_x <= 319;  // test spawn value = 120
@@ -702,6 +712,7 @@ module control (
     clk, reset,
 
     go, plot_done, mov_key_pressed,
+    win,
 
     frame_tick,
 
@@ -718,6 +729,7 @@ module control (
 
     input clk, reset;
     input go, plot_done, mov_key_pressed;
+    input win;
     input frame_tick;
 
     output reg draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
@@ -725,7 +737,7 @@ module control (
     output reg draw_score, draw_lives;
     output reg move_objects;
     output reg erase_frog;
-     output reg ld_frog_loc;
+    output reg ld_frog_loc;
 
      output reg [3:0] current_state;
     reg [3:0] next_state;
