@@ -455,13 +455,13 @@ module datapath (
             river_object_3_x <= river_object_3_x + 1;
 
             // check left and right boundaries (max x = resolution width - frog width - 1)
-            if((frog_x + right - left >= 0) && (frog_x + right - left <= 320 - 32 - 1)) begin
+            if ((frog_x + right - left >= 0) && (frog_x + right - left <= 320 - 32 - 1)) begin
                 // update top left pixel's x coordinate if possible
                 frog_x <= frog_x + right - left;
             end
 
             // check up and down boundaries (max y = resolution height - frog height - 1)
-            if ((next_y_frog - up + down >= 0) && (next_y_frog - up + down <= 240 - 24 - 1)) begin
+            if ((frog_y - up + down >= 0) && (frog_y - up + down <= 240 - 24 - 1)) begin
                 // update top left pixel's y coordinate if possible
                 frog_y <= frog_y - up + down;
             end

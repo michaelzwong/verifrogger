@@ -23,6 +23,11 @@ force score 10#2 0
 force lives 10#8 0
 force go 0 0ns, 1 10ns, 0 15ns, 1 1700000ns, 0 1700005ns, 1 2500000ns, 0 2500005ns
 
+force up 0 0
+force left 0 0
+force down 1 0
+force right 1 0
+
 # Run simulation and zoom into relevant area of waveform.
 run 10000000ns
 wave zoom full
