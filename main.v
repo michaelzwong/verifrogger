@@ -439,10 +439,10 @@ module datapath (
             // move the river object for the next frame
         end else if (draw_score) begin
             x <= 300 + next_x_char;
-            y <= 14 + next_y_char;
+            y <= 8 + next_y_char;
         end else if (draw_lives) begin
             x <= 300 + next_x_char;
-            y <= 27 + next_y_char;
+            y <= 23 + next_y_char;
         end else if (draw_frog) begin
             x <= frog_x + next_x_frog;
             y <= frog_y + next_y_frog;
