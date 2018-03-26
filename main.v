@@ -4,6 +4,7 @@
 `include "vga_adapter/vga_adapter.v"
 `include "ps2keyboard/PS2_Keyboard_Controller.v"
 `include "counter.v"
+`include "lfsr.v"
 
 
 
@@ -360,7 +361,7 @@ module datapath (
 
     plot, x, y, color,
 
-    dne_signal_1, dne_signal_1,
+    dne_signal_1, dne_signal_2,
     win
 );
 
@@ -370,6 +371,7 @@ module datapath (
 
     input draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     input draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
+    input draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
     input draw_score, draw_lives;
     input move_objects;
     input erase_frog;
@@ -403,11 +405,11 @@ module datapath (
     // top left coordinates of objects in the game
     reg [8:0] frog_x, frog_y;
     // first row of river objects
-    reg [8:0] river_object_1_x, river_object_1_y;
+    reg [8:0] river_object_1_x, river_object_1_y, river_object_1_x_2, river_object_1_y_2, river_object_1_x_3, river_object_1_y_3;
     // second row of river objects
-    reg [8:0] river_object_2_x, river_object_2_y;
+    reg [8:0] river_object_2_x, river_object_2_y, river_object_2_x_2, river_object_2_y_2, river_object_2_x_3, river_object_2_y_3;
     // third row of river objects
-    reg [8:0] river_object_3_x, river_object_3_y;
+    reg [8:0] river_object_3_x, river_object_3_y, river_object_3_x_2, river_object_3_y_2, river_object_3_x_3, river_object_3_y_3;
 
     wire draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
 
@@ -450,9 +452,9 @@ module datapath (
       .rnd(rnd_13_bit_num)
     );
 
-    wire row_1_object_2_exists, row_1_object_3_exists;
-    wire row_2_object_2_exists, row_2_object_3_exists;
-    wire row_3_object_2_exists, row_2_object_3_exists;
+    reg row_1_object_2_exists, row_1_object_3_exists;
+    reg row_2_object_2_exists, row_2_object_3_exists;
+    reg row_3_object_2_exists, row_3_object_3_exists;
 
     // get the 4 least significant bit
     // used in randomly generating river objects

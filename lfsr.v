@@ -6,10 +6,11 @@ module LFSR
   output [12:0] rnd
 );
 
+reg [12:0] random, random_next, random_done;
+
 // The tap locations for a 13 bit number
 wire feedback = random[12] ^ random[3] ^ random[2] ^ random[0];
 
-reg [12:0] random, random_next, random_done;
 
 // keeps track of the shifts
 reg [3:0] count, count_next;
