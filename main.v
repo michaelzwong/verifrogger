@@ -417,7 +417,10 @@ module datapath (
     assign draw = draw_scrn || draw_char || draw_river_obj || draw_frog || erase_frog;
     assign draw_scrn = draw_scrn_start || draw_scrn_game_over || draw_scrn_game_bg;
     assign draw_char = draw_score || draw_lives;
-    assign draw_river_obj = draw_river_obj_1 || draw_river_obj_2 || draw_river_obj_3;
+    assign draw_river_obj = draw_river_obj_1 || draw_river_obj_2 || draw_river_obj_3 ||
+      draw_pot_obj_1_2 || draw_pot_obj_1_3 ||
+      draw_pot_obj_2_2 || draw_pot_obj_2_3 ||
+      draw_pot_obj_3_2 || draw_pot_obj_3_3;
 
      // ### Frog collision detection signals. ###
 
