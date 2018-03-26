@@ -1,4 +1,4 @@
-import PIL
+from tqdm import tqdm
 from PIL import Image
 
 # Indices for a line.
@@ -17,20 +17,29 @@ FRAME_LENGTH = 1666664000
 def modelsim_lcd_decoder(file_name: str):
     image = Image.new("RGB", (320, 240))
     frame_count = 0
-
+    pbar = tqdm(total=FRAME_LENGTH, unit="ps",
+                desc="Processing frame {}".format(frame_count + 1))
     with open(file_name) as f:
         for line in f:
             try:
                 data = parse_line(line, image)
             except IndexError:
                 continue
+            if data and int(data[TIME]) > frame_count * FRAME_LENGTH:
+                new_val = int(data[TIME]) - frame_count * FRAME_LENGTH
+                pbar.update(new_val - pbar.n)
+                if pbar.total < pbar.n:
+                    pbar.total = pbar.n
             if data and int(data[TIME]) > (frame_count + 1) * FRAME_LENGTH:
+                pbar.close()
                 frame_count += 1
-                print("Processed frame {}.".format(frame_count))
                 image.save("{:05d}.bmp".format(frame_count), "BMP")
+                pbar = tqdm(total=FRAME_LENGTH, unit="ps",
+                            desc="Processing frame {}".format(frame_count + 1))
 
+    pbar.total = pbar.n
+    pbar.close()
     frame_count += 1
-    print("Processed frame {} (incomplete).".format(frame_count))
     image.save("{:05d}.bmp".format(frame_count), "BMP")
 
 
