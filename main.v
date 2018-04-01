@@ -15,7 +15,7 @@ module main_test ();
     wire clk, reset, rnd_reset;
     wire go;
 
-    wire [1:0] rate;
+    // wire [1:0] rate;
 
     wire draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     wire draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
@@ -26,7 +26,7 @@ module main_test ();
     wire draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
 
 
-    wire [3:0] score, lives;
+    // wire [3:0] score, lives;
 
     wire plot_done;
 
@@ -55,11 +55,11 @@ module main_test ();
         .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
         .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
 
-        .rate(rate),
+        // .rate(rate),
 
         .ld_frog_loc(ld_frog_loc),
 
-        .score(score), .lives(lives),
+        // .score(score), .lives(lives),
 
         .frame_tick(frame_tick),
 
@@ -134,9 +134,10 @@ module VeriFrogger (
     wire rnd_reset = !KEY[1];
     wire enable = !KEY[2];
 
-    wire [3:0] score = SW[3:0];
-    wire [3:0] lives = SW[7:4];
-    wire [1:0] rate = SW[9:8];
+    // ### Testing. ###
+    // wire [3:0] score = SW[3:0];
+    // wire [3:0] lives = SW[7:4];
+    // wire [1:0] rate = SW[9:8];
 
     reg go;
 
@@ -155,8 +156,8 @@ module VeriFrogger (
     wire plot;
     wire [8:0] x, y;
     wire [2:0] color;
-	 
-	 wire win, die;
+
+	  wire win, die;
 
     // VGA wires.
     wire VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N;
@@ -166,7 +167,7 @@ module VeriFrogger (
     wire w, a, s, d;
     wire up, left, down, right;
     wire space, enter;
-	
+
 
     wire mov_key_pressed;
 
@@ -176,12 +177,12 @@ module VeriFrogger (
     wire keyboard_clock;
 
     // Since both w, a, s, d and up, left, down, right are the same controls, the wires can be combined.
-//    wire up_c, left_c, down_c, right_c;
+    // wire up_c, left_c, down_c, right_c;
 
-//    assign up_c = w || up;
-//    assign left_c = a || left;
-//    assign down_c = s || down;
-//    assign right_c = d || right;
+    // assign up_c = w || up;
+    // assign left_c = a || left;
+    // assign down_c = s || down;
+    // assign right_c = d || right;
 
      // ### GO button stuff. ###
 
@@ -220,15 +221,17 @@ module VeriFrogger (
 
      wire [4:0] current_state;
 
+
+     // ### Hex displays. ###
      hex_dec hd0 (.in(current_state), .out(HEX0));
 
      hex_dec hd1 (.in(go_state), .out(HEX1));
 
      hex_dec hd2 (.in(go_key), .out(HEX2));
 
-	  assign LEDR[9] = win;
-	  assign LEDR[8] = die;
-	  
+	   assign LEDR[9] = win;
+	   assign LEDR[8] = die;
+
      assign LEDR[3] = up;
      assign LEDR[2] = left;
      assign LEDR[1] = down;
@@ -250,11 +253,11 @@ module VeriFrogger (
         .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
         .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
 
-        .rate(rate),
+        // .rate(rate),
 
         .ld_frog_loc(ld_frog_loc),
 
-        .score(score), .lives(lives),
+        // .score(score), .lives(lives),
 
         .frame_tick(frame_tick),
 
@@ -290,7 +293,7 @@ module VeriFrogger (
 
         .current_state(current_state)
     );
-	 
+
     // ### VGA adapter. ###
 
     vga_adapter #(
@@ -363,11 +366,11 @@ module datapath (
 
     draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3,
 
-    rate,
+    // rate, // for testing
 
     ld_frog_loc,
 
-    score, lives,
+    // score, lives, // for testing
 
     frame_tick,
 
@@ -393,9 +396,9 @@ module datapath (
     input erase_frog;
     input ld_frog_loc;
 
-    input [1:0] rate;
+    // input [1:0] rate;
 
-    input [3:0] score, lives;
+    // input [3:0] score, lives;
 
     input left, right, up, down;
 
@@ -415,6 +418,10 @@ module datapath (
     output reg [8:0] x;
     output reg [8:0] y;
     output win, die; // indicates that the player won the level, or fell into the water and lost (died)
+
+    // Data
+    reg [3:0] rate;
+    reg [3:0] score, lives;
 
     reg pre_plot;
     wire is_transparent;
@@ -512,7 +519,7 @@ module datapath (
     // ### Timing adjustments. ###
 
     wire [1:0] frog_x_r, frog_x_l, frog_y_d, frog_y_u;
-	 assign frog_x_r = right + rate * on_river_object_row_1 + rate * on_river_object_row_3; 
+	 assign frog_x_r = right + rate * on_river_object_row_1 + rate * on_river_object_row_3;
     assign frog_x_l = left + rate * on_river_object_row_2;
 	 assign frog_y_d = down;
 	 assign frog_y_u = up;
@@ -530,6 +537,9 @@ module datapath (
             frog_y <= 48; //row_1_object_2_exists 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
             river_object_1_x <= 0;  // test spawn value = 20
             river_object_1_y <= 75;   // test spawn value = 80
+            rate = 0;
+            lives = 0;
+            score = 0;
 
             // potential river object
             if (rnd_13_bit_num[0] == 1) begin
@@ -901,7 +911,7 @@ module datapath (
 
     // ### Color mux. ###
 
-	 
+
     assign is_transparent = draw_frog && frog_color == 0;
 
     always @ (*) begin
