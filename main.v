@@ -6,8 +6,11 @@
 `include "counter.v"
 `include "lfsr2.v"
 
-
-
+/**
+================================================================================
+==Main=Test=====================================================================
+================================================================================
+**/
 module main_test ();
 
     // ### Wires. ###
@@ -97,7 +100,17 @@ module main_test ();
     );
 
 endmodule // main_test
+/**
+================================================================================
+==Main=Test=End=================================================================
+================================================================================
+**/
 
+/**
+================================================================================
+==Top=Module====================================================================
+================================================================================
+**/
 module VeriFrogger (
     CLOCK_50,
     KEY, SW,
@@ -348,11 +361,17 @@ module VeriFrogger (
 
 endmodule // top
 
+/**
+================================================================================
+==Top=Module=End================================================================
+================================================================================
+**/
+
 
 /**
-................................................................................
-..Datapath......................................................................
-................................................................................
+================================================================================
+==Datapath======================================================================
+================================================================================
 **/
 
 module datapath (
@@ -421,6 +440,7 @@ module datapath (
 
     // Data
     reg [3:0] rate;
+    reg finer_rate;
     reg [3:0] score, lives;
 
     reg pre_plot;
@@ -500,14 +520,14 @@ module datapath (
 
     // Used for spawning river objects. Minimum distance is min_dist, max is
     // min_dist + 15
-    wire [12:0]rnd_13_bit_num = rnd_generator;
+    wire [12:0] rnd_13_bit_num = rnd_generator;
     LFSR #(13)
-	 lfsr0 (
-      .i_Clk(clk),
-      .i_Enable(1),
-      .o_LFSR_Data(rnd_generator),
-		.o_LFSR_Done(lfsr_done)
-    );
+  	  lfsr0 (
+        .i_Clk(clk),
+        .i_Enable(1),
+        .o_LFSR_Data(rnd_generator),
+  		  .o_LFSR_Done(lfsr_done)
+      );
 
     reg row_1_object_2_exists, row_1_object_3_exists;
     reg row_2_object_2_exists, row_2_object_3_exists;
@@ -519,10 +539,11 @@ module datapath (
     // ### Timing adjustments. ###
 
     wire [1:0] frog_x_r, frog_x_l, frog_y_d, frog_y_u;
-	 assign frog_x_r = right + rate * on_river_object_row_1 + rate * on_river_object_row_3;
+
+	  assign frog_x_r = right + rate * on_river_object_row_1 + rate * on_river_object_row_3;
     assign frog_x_l = left + rate * on_river_object_row_2;
-	 assign frog_y_d = down;
-	 assign frog_y_u = up;
+	  assign frog_y_d = down;
+	  assign frog_y_u = up;
 
     always @ (posedge clk) begin
         // Plot signal, x and y need to be delayed by one clock cycle
@@ -537,9 +558,12 @@ module datapath (
             frog_y <= 48; //row_1_object_2_exists 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
             river_object_1_x <= 0;  // test spawn value = 20
             river_object_1_y <= 75;   // test spawn value = 80
-            rate = 0;
-            lives = 0;
-            score = 0;
+
+            // reset the data
+            finer_rate <= 1;
+            rate <= 1;
+            lives <= 10;
+            score <= 0;
 
             // potential river object
             if (rnd_13_bit_num[0] == 1) begin
@@ -687,6 +711,7 @@ module datapath (
         end else if (move_objects) begin
             // flows right
             river_object_1_x <= river_object_1_x + rate;
+
             // flows left
             river_object_2_x <= river_object_2_x - rate;
             // flows right
@@ -731,6 +756,9 @@ module datapath (
         end else if (draw_scrn_start || draw_scrn_game_over || draw_scrn_game_bg) begin
             x <= next_x_scrn;
             y <= next_y_scrn;
+        end else if (win) begin
+            score <= score + 1;
+            finer_rate <= !finer_rate;
         end
     end
 //            if(left && next_x_frog - 1 >= 0) begin
@@ -941,15 +969,15 @@ module datapath (
 endmodule
 
 /**
-................................................................................
-..Datapath_End..................................................................
-................................................................................
+================================================================================
+==Datapath=End==================================================================
+================================================================================
 **/
 
 /**
-................................................................................
-..Control.......................................................................
-................................................................................
+================================================================================
+==Control=======================================================================
+================================================================================
 **/
 module control (
     clk, reset,
@@ -1004,17 +1032,17 @@ module control (
                 S_DRAW_LIVES            = 7,    // Draw lives counter.
                 S_WAIT_RIVER_OBJ        = 8,    // Wait before drawing river objects.
                 S_DRAW_RIVER_OBJ_1      = 9,    // Draw river object 1.
-                  S_DRAW_POT_OBJ_1_2      = 10,   // Potential river object 2 (1).
-                  S_DRAW_POT_OBJ_1_3      = 11,   // Potential river object 3 (1).
+                S_DRAW_POT_OBJ_1_2      = 10,   // Potential river object 2 (1).
+                S_DRAW_POT_OBJ_1_3      = 11,   // Potential river object 3 (1).
                 S_DRAW_RIVER_OBJ_2      = 12,   // Draw river object 2.
-                  S_DRAW_POT_OBJ_2_2      = 13,   // Potential river object 2 (2).
-                  S_DRAW_POT_OBJ_2_3      = 14,   // Potential river object 3 (2).
+                S_DRAW_POT_OBJ_2_2      = 13,   // Potential river object 2 (2).
+                S_DRAW_POT_OBJ_2_3      = 14,   // Potential river object 3 (2).
                 S_DRAW_RIVER_OBJ_3      = 15,   // Draw river object 3.
-                  S_DRAW_POT_OBJ_3_2      = 16,   // Potential river object 2 (3).
-                  S_DRAW_POT_OBJ_3_3      = 17,   // Potential river object 3 (3).
+                S_DRAW_POT_OBJ_3_2      = 16,   // Potential river object 2 (3).
+                S_DRAW_POT_OBJ_3_3      = 17,   // Potential river object 3 (3).
                 S_WAIT_FROG             = 18,   // Wait before drawing frog.
                 S_DRAW_FROG             = 19,   // Draw frog.
-                S_MOVE_OBJECTS           = 20,   // Move objects for the next cycle. (One cycle is from state 4 to 15)
+                S_MOVE_OBJECTS          = 20,   // Move objects for the next cycle. (One cycle is from state 4 to 15)
                 S_WAIT_FRAME_TICK       = 21;   // Wait for frame tick.
                 // S_WAIT_FROG_MOVEMENT    = 13,   // Wait before preceding to movement state.
                 // S_FROG_MOVEMENT         = 14;   // Movement state of frog (When key is pressed).
@@ -1107,8 +1135,9 @@ module control (
                 // next_state = plot_done ? S_DRAW_FROG : S_DRAW_POT_OBJ_3_3;
 
             // New changes (need to be tested)
-            S_WAIT_FROG:
-                next_state = go ? S_DRAW_FROG : S_WAIT_FROG;
+            // S_WAIT_FROG:
+            //     next_state = go ? S_DRAW_FROG : S_WAIT_FROG;
+
             S_DRAW_FROG:
                 next_state = plot_done ? S_MOVE_OBJECTS : S_DRAW_FROG;
             S_MOVE_OBJECTS:
@@ -1230,12 +1259,16 @@ module control (
 endmodule
 
 /**
-................................................................................
-..CONTROL_END...................................................................
-................................................................................
+================================================================================
+==Control=End===================================================================
+================================================================================
 **/
 
-
+/**
+================================================================================
+==Hex=Display===================================================================
+================================================================================
+**/
 module hex_dec(in, out);
     input [3:0] in;
     output reg [6:0] out;
@@ -1261,3 +1294,8 @@ module hex_dec(in, out);
             default: out = 7'h7f;
         endcase
 endmodule
+/**
+================================================================================
+==Hex=Display=End===============================================================
+================================================================================
+**/
