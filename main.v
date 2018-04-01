@@ -439,8 +439,8 @@ module datapath (
     output win, die; // indicates that the player won the level, or fell into the water and lost (died)
 
     // Data
-    reg [3:0] rate;
-    reg finer_rate;
+    reg [8:0] rate;
+    reg finer_rate; // 1 if the rate has a decimal, 0 if it is an integer
     reg [3:0] score, lives;
 
     reg pre_plot;
@@ -560,8 +560,11 @@ module datapath (
             river_object_1_y <= 75;   // test spawn value = 80
 
             // reset the data
-            finer_rate <= 1;
             rate <= 1;
+
+            // the initial rate is 0.5
+            finer_rate <= 1;
+
             lives <= 10;
             score <= 0;
 
@@ -711,7 +714,6 @@ module datapath (
         end else if (move_objects) begin
             // flows right
             river_object_1_x <= river_object_1_x + rate;
-
             // flows left
             river_object_2_x <= river_object_2_x - rate;
             // flows right
