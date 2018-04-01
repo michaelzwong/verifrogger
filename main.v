@@ -4,7 +4,7 @@
 `include "vga_adapter/vga_adapter.v"
 `include "ps2keyboard/PS2_Keyboard_Controller.v"
 `include "counter.v"
-`include "lfsr.v"
+`include "lfsr2.v"
 
 
 
@@ -155,6 +155,8 @@ module VeriFrogger (
     wire plot;
     wire [8:0] x, y;
     wire [2:0] color;
+	 
+	 wire win, die;
 
     // VGA wires.
     wire VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N;
@@ -164,6 +166,7 @@ module VeriFrogger (
     wire w, a, s, d;
     wire up, left, down, right;
     wire space, enter;
+	
 
     wire mov_key_pressed;
 
@@ -223,6 +226,9 @@ module VeriFrogger (
 
      hex_dec hd2 (.in(go_key), .out(HEX2));
 
+	  assign LEDR[9] = win;
+	  assign LEDR[8] = die;
+	  
      assign LEDR[3] = up;
      assign LEDR[2] = left;
      assign LEDR[1] = down;
@@ -245,6 +251,7 @@ module VeriFrogger (
         .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
 
         .rate(rate),
+
         .ld_frog_loc(ld_frog_loc),
 
         .score(score), .lives(lives),
@@ -256,14 +263,15 @@ module VeriFrogger (
         .plot_done(plot_done),
 
         .plot(plot), .x(x), .y(y), .color(color),
-
-        .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2)
+        .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
+        .win(win), .die(die)
     );
 
     control c0 (
         .clk(clk), .reset(reset),
 
         .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
+        .win(win), .die(die),
 
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
 
@@ -275,15 +283,14 @@ module VeriFrogger (
         .draw_score(draw_score), .draw_lives(draw_lives), .move_objects(move_objects),
         .erase_frog(erase_frog),
 
-          .ld_frog_loc(ld_frog_loc),
+        .ld_frog_loc(ld_frog_loc),
 
-          .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
-          .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
+        .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
+        .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
 
-
-          .current_state(current_state)
+        .current_state(current_state)
     );
-
+	 
     // ### VGA adapter. ###
 
     vga_adapter #(
@@ -445,22 +452,22 @@ module datapath (
     wire on_river_object, on_river_row_1, on_river_row_2, on_river_row_3;
     assign on_river_row_1 = (frog_y + 32 / 2 > 66) && (frog_y + 32 / 2 <= 111);
     assign on_river_row_2 = (frog_y + 32 / 2 > 111) && (frog_y + 32 / 2 <= 158);
-    assign on_river_row_1 = (frog_y + 32 / 2 > 158) && (frog_y + 32 / 2 < 203);
+    assign on_river_row_3 = (frog_y + 32 / 2 > 158) && (frog_y + 32 / 2 < 203);
 
     // Check whether the frog is on a river object and on which row.
     wire on_river_object_row_1, on_river_object_row_2, on_river_object_row_3;
     assign on_river_object_row_1 = on_river_row_1 && (
         (frog_x + 24 / 2 > river_object_1_x && frog_x + 24 / 2 < river_object_1_x + 96) ||
-        (frog_x + 24 / 2 > river_object_1_x_2 && frog_x + 24 / 2 < river_object_1_x_2 + 96) ||
-        (frog_x + 24 / 2 > river_object_1_x_3 && frog_x + 24 / 2 < river_object_1_x_3 + 96));
+        (row_1_object_2_exists && frog_x + 24 / 2 > river_object_1_x_2 && frog_x + 24 / 2 < river_object_1_x_2 + 96) ||
+        (row_1_object_3_exists && frog_x + 24 / 2 > river_object_1_x_3 && frog_x + 24 / 2 < river_object_1_x_3 + 96));
     assign on_river_object_row_2 = on_river_row_2 && (
         (frog_x + 24 / 2 > river_object_2_x && frog_x + 24 / 2 < river_object_2_x + 96) ||
-        (frog_x + 24 / 2 > river_object_2_x_2 && frog_x + 24 / 2 < river_object_2_x_2 + 96) ||
-        (frog_x + 24 / 2 > river_object_2_x_3 && frog_x + 24 / 2 < river_object_2_x_3 + 96));
+        (row_2_object_2_exists && frog_x + 24 / 2 > river_object_2_x_2 && frog_x + 24 / 2 < river_object_2_x_2 + 96) ||
+        (row_2_object_3_exists && frog_x + 24 / 2 > river_object_2_x_3 && frog_x + 24 / 2 < river_object_2_x_3 + 96));
     assign on_river_object_row_3 = on_river_row_3 && (
         (frog_x + 24 / 2 > river_object_3_x && frog_x + 24 / 2 < river_object_3_x + 96) ||
-        (frog_x + 24 / 2 > river_object_3_x_2 && frog_x + 24 / 2 < river_object_3_x_2 + 96) ||
-        (frog_x + 24 / 2 > river_object_3_x_3 && frog_x + 24 / 2 < river_object_3_x_3 + 96));
+        (row_3_object_2_exists && frog_x + 24 / 2 > river_object_3_x_2 && frog_x + 24 / 2 < river_object_3_x_2 + 96) ||
+        (row_3_object_3_exists && frog_x + 24 / 2 > river_object_3_x_3 && frog_x + 24 / 2 < river_object_3_x_3 + 96));
 
     assign on_river_object = on_river_object_row_1 || on_river_object_row_2 || on_river_object_row_3;
 
@@ -470,7 +477,7 @@ module datapath (
 
      wire [20:0] frame_counter;
      output frame_tick;
-     assign frame_tick = frame_counter == 833332;
+     assign frame_tick = frame_counter == 834168;
 
     counter counter0 (
         .clk(clk),
@@ -487,10 +494,12 @@ module datapath (
     // Used for spawning river objects. Minimum distance is min_dist, max is
     // min_dist + 15
     wire [12:0]rnd_13_bit_num = rnd_generator;
-    LFSR lfsr0 (
-      .clock(clk),
-      .reset(rnd_reset),
-      .rnd(rnd_generator)
+    LFSR #(13)
+	 lfsr0 (
+      .i_Clk(clk),
+      .i_Enable(1),
+      .o_LFSR_Data(rnd_generator),
+		.o_LFSR_Done(lfsr_done)
     );
 
     reg row_1_object_2_exists, row_1_object_3_exists;
@@ -502,9 +511,11 @@ module datapath (
 
     // ### Timing adjustments. ###
 
-    wire new_frog_x, new_frog_y;
-    assign new_frog_x = frog_x + right - left + on_river_object_row_1 - on_river_object_row_2 + on_river_object_row_3;
-    assign new_frog_y = frog_y + down - left;
+    wire [1:0] frog_x_r, frog_x_l, frog_y_d, frog_y_u;
+	 assign frog_x_r = right + rate * on_river_object_row_1 + rate * on_river_object_row_3; 
+    assign frog_x_l = left + rate * on_river_object_row_2;
+	 assign frog_y_d = down;
+	 assign frog_y_u = up;
 
     always @ (posedge clk) begin
         // Plot signal, x and y need to be delayed by one clock cycle
@@ -577,7 +588,7 @@ module datapath (
             if (rnd_13_bit_num[5] == 1) begin
               row_3_object_3_exists <= 1;
               river_object_3_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[8:3];
-              river_object_3_y_3 <= 0;
+              river_object_3_y_3 <= 155;
             end else begin
               row_3_object_3_exists <= 0;
             end
@@ -665,55 +676,49 @@ module datapath (
             y <= frog_y + next_y_frog;
         end else if (move_objects) begin
             // flows right
-            river_object_1_x <= river_object_1_x + 1;
+            river_object_1_x <= river_object_1_x + rate;
             // flows left
-            river_object_2_x <= river_object_2_x - 1;
+            river_object_2_x <= river_object_2_x - rate;
             // flows right
-            river_object_3_x <= river_object_3_x + 1;
+            river_object_3_x <= river_object_3_x + rate;
 
 
             if(row_1_object_2_exists) begin
-              river_object_1_x_2 <= river_object_1_x_2 + 1;
-              river_object_1_y_2 <= river_object_1_y_2 + 1;
+              river_object_1_x_2 <= river_object_1_x_2 + rate;
             end
 
             if(row_1_object_3_exists) begin
-              river_object_1_x_3 <= river_object_1_x_3 + 1;
-              river_object_1_y_3 <= river_object_1_y_3 + 1;
+              river_object_1_x_3 <= river_object_1_x_3 + rate;
             end
 
             if(row_2_object_2_exists) begin
-              river_object_2_x_2 <= river_object_2_x_2 - 1;
-              river_object_2_y_2 <= river_object_2_y_2 - 1;
+              river_object_2_x_2 <= river_object_2_x_2 - rate;
             end
 
             if(row_2_object_3_exists) begin
-              river_object_2_x_3 <= river_object_2_x_3 - 1;
-              river_object_2_y_3 <= river_object_2_y_3 - 1;
+              river_object_2_x_3 <= river_object_2_x_3 - rate;
             end
 
             if(row_3_object_2_exists) begin
-              river_object_3_x_2 <= river_object_3_x_2 + 1;
-              river_object_3_y_2 <= river_object_3_y_2 + 1;
+              river_object_3_x_2 <= river_object_3_x_2 + rate;
             end
 
             if(row_3_object_3_exists) begin
-              river_object_3_x_3 <= river_object_3_x_3 + 1;
-              river_object_3_y_3 <= river_object_3_y_3 + 1;
+              river_object_3_x_3 <= river_object_3_x_3 + rate;
             end
             // check left and right boundaries (max x = resolution width - frog width - 1)
-            if ((new_frog_x >= 0) && (new_frog_x <= 320 - 32 - 1)) begin
+            if ((frog_x + frog_x_r - frog_x_l >= 0) && (frog_x + frog_x_r - frog_x_l <= 320 - 32 - 1)) begin
                 // update top left pixel's x coordinate if possible
-                frog_x <= new_frog_x;
+                frog_x <= frog_x + frog_x_r - frog_x_l;
             end
 
             // check up and down boundaries (max y = resolution height - frog height - 1)
-            if ((new_frog_y >= 0) && (new_frog_y <= 240 - 24 - 1)) begin
+            if ((frog_y + frog_y_d - frog_y_u >= 0) && (frog_y + frog_y_d - frog_y_u <= 240 - 24 - 1)) begin
                 // update top left pixel's y coordinate if possible
-                frog_y <= new_frog_y;
+                frog_y <= frog_y + frog_y_d - frog_y_u;
             end
 
-        end else begin
+        end else if (draw_scrn_start || draw_scrn_game_over || draw_scrn_game_bg) begin
             x <= next_x_scrn;
             y <= next_y_scrn;
         end
@@ -876,18 +881,6 @@ module datapath (
         .color_out(river_obj_2_color)
     );
 
-    sprite_ram_module #(
-        .WIDTH_X(4),
-        .WIDTH_Y(3),
-        .RESOLUTION_X(10),
-        .RESOLUTION_Y(6),
-        .MIF_FILE("graphics/river_object_1.mif")
-    ) srm_river_obj_3 (
-        .clk(clk),
-        .x(next_x_river_obj), .y(next_y_river_obj),
-        .color_out(river_obj_1_color)
-    );
-
     // ### Score and life counters. ###
 
     wire [2:0] score_color, lives_color;
@@ -908,6 +901,7 @@ module datapath (
 
     // ### Color mux. ###
 
+	 
     assign is_transparent = draw_frog && frog_color == 0;
 
     always @ (*) begin
@@ -931,7 +925,7 @@ module datapath (
         else if (draw_frog)
             color = frog_color;
         else
-            color = 0;
+            color = 7;
     end
 
 endmodule

@@ -17,7 +17,7 @@ module counter #(
       //==============================
       parameter DATA_WIDTH   = 21,                // number of bits in counter
       parameter COUNT_FROM   = 0,                // start with this number   
-      parameter COUNT_TO     = 833333, // value to count to in CL case
+      parameter COUNT_TO     = 834168, // value to count to in CL case
       parameter STEP         = 1                 // negative or positive, sets direction
    ) (
       //===============
