@@ -439,22 +439,41 @@ module datapath (
     output win, die; // indicates that the player won the level, or fell into the water and lost (died)
 
     // Data
-    reg [8:0] rate;
-    reg finer_rate; // 1 if the rate has a decimal, 0 if it is an integer
+    reg [5:0] rate;
     reg [3:0] score, lives;
 
     reg pre_plot;
     wire is_transparent;
     assign plot = pre_plot && !is_transparent;
 
-    // top left coordinates of objects in the game
+    // ### Top left coordinates of objects in the game ###.
     reg [8:0] frog_x, frog_y;
-    // first row of river objects
-    reg [8:0] river_object_1_x, river_object_1_y, river_object_1_x_2, river_object_1_y_2, river_object_1_x_3, river_object_1_y_3;
-    // second row of river objects
-    reg [8:0] river_object_2_x, river_object_2_y, river_object_2_x_2, river_object_2_y_2, river_object_2_x_3, river_object_2_y_3;
-    // third row of river objects
-    reg [8:0] river_object_3_x, river_object_3_y, river_object_3_x_2, river_object_3_y_2, river_object_3_x_3, river_object_3_y_3;
+
+    // ### First row of river objects ###.
+
+    // x coordinates are 1 bit longer for finer grain rate control
+    reg [9:0] river_object_1_x, river_object_1_x_2, river_object_1_x_3;
+
+    // y coordinates
+    reg [8:0] river_object_1_y, river_object_1_y_2, river_object_1_y_3;
+
+    // ### Second row of river objects ###.
+
+    // x coordinates
+    reg [9:0] river_object_2_x, river_object_2_x_2, river_object_2_x_3;
+
+    // y coordinates
+    reg [8:0]river_object_2_y, river_object_2_y_2, river_object_2_y_3;
+
+    // ### Third row of river objects ###.
+
+    // x coordinates
+    reg [9:0] river_object_3_x, river_object_3_x_2, river_object_3_x_3;
+
+    // y coordinates
+    reg [8:0] river_object_3_y, river_object_3_y_2, river_object_3_y_3;
+
+
 
     wire draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
 
@@ -484,17 +503,17 @@ module datapath (
     // Check whether the frog is on a river object and on which row.
     wire on_river_object_row_1, on_river_object_row_2, on_river_object_row_3;
     assign on_river_object_row_1 = on_river_row_1 && (
-        (frog_x + 24 / 2 > river_object_1_x && frog_x + 24 / 2 < river_object_1_x + 96) ||
-        (row_1_object_2_exists && frog_x + 24 / 2 > river_object_1_x_2 && frog_x + 24 / 2 < river_object_1_x_2 + 96) ||
-        (row_1_object_3_exists && frog_x + 24 / 2 > river_object_1_x_3 && frog_x + 24 / 2 < river_object_1_x_3 + 96));
+        (frog_x + 24 / 2 > river_object_1_x[9:1] && frog_x + 24 / 2 < river_object_1_x[9:1] + 96) ||
+        (row_1_object_2_exists && frog_x + 24 / 2 > river_object_1_x_2[9:1] && frog_x + 24 / 2 < river_object_1_x_2[9:1] + 96) ||
+        (row_1_object_3_exists && frog_x + 24 / 2 > river_object_1_x_3[9:1] && frog_x + 24 / 2 < river_object_1_x_3[9:1] + 96));
     assign on_river_object_row_2 = on_river_row_2 && (
-        (frog_x + 24 / 2 > river_object_2_x && frog_x + 24 / 2 < river_object_2_x + 96) ||
-        (row_2_object_2_exists && frog_x + 24 / 2 > river_object_2_x_2 && frog_x + 24 / 2 < river_object_2_x_2 + 96) ||
-        (row_2_object_3_exists && frog_x + 24 / 2 > river_object_2_x_3 && frog_x + 24 / 2 < river_object_2_x_3 + 96));
+        (frog_x + 24 / 2 > river_object_2_x[9:1] && frog_x + 24 / 2 < river_object_2_x[9:1] + 96) ||
+        (row_2_object_2_exists && frog_x + 24 / 2 > river_object_2_x_2[9:1] && frog_x + 24 / 2 < river_object_2_x_2[9:1] + 96) ||
+        (row_2_object_3_exists && frog_x + 24 / 2 > river_object_2_x_3[9:1] && frog_x + 24 / 2 < river_object_2_x_3[9:1] + 96));
     assign on_river_object_row_3 = on_river_row_3 && (
-        (frog_x + 24 / 2 > river_object_3_x && frog_x + 24 / 2 < river_object_3_x + 96) ||
-        (row_3_object_2_exists && frog_x + 24 / 2 > river_object_3_x_2 && frog_x + 24 / 2 < river_object_3_x_2 + 96) ||
-        (row_3_object_3_exists && frog_x + 24 / 2 > river_object_3_x_3 && frog_x + 24 / 2 < river_object_3_x_3 + 96));
+        (frog_x + 24 / 2 > river_object_3_x[9:1] && frog_x + 24 / 2 < river_object_3_x[9:1] + 96) ||
+        (row_3_object_2_exists && frog_x + 24 / 2 > river_object_3_x_2[9:1] && frog_x + 24 / 2 < river_object_3_x_2[9:1] + 96) ||
+        (row_3_object_3_exists && frog_x + 24 / 2 > river_object_3_x_3[9:1] && frog_x + 24 / 2 < river_object_3_x_3[9:1] + 96));
 
     assign on_river_object = on_river_object_row_1 || on_river_object_row_2 || on_river_object_row_3;
 
@@ -556,14 +575,15 @@ module datapath (
         if (reset) begin
             frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally
             frog_y <= 48; //row_1_object_2_exists 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
-            river_object_1_x <= 0;  // test spawn value = 20
-            river_object_1_y <= 75;   // test spawn value = 80
+            river_object_1_x <= 0;
+            river_object_1_y <= 75;
+
+            river_object_1_x << 1'b1; // in case spawn x coordinate is not 0
 
             // reset the data
-            rate <= 1;
 
-            // the initial rate is 0.5
-            finer_rate <= 1;
+            // initial rate is 0.5
+            rate <= 1;
 
             lives <= 10;
             score <= 0;
@@ -573,6 +593,8 @@ module datapath (
               row_1_object_2_exists <= 1;
               river_object_1_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[12:9]; // 96 + 10 + X, X < 16
               river_object_1_y_2 <= 75;
+
+              river_object_1_x_2 << 1'b1;
             end else begin
               row_1_object_2_exists <= 0;
             end
@@ -582,6 +604,8 @@ module datapath (
               row_1_object_3_exists <= 1;
               river_object_1_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[9:6]; // 96 + 10 + X, X < 16
               river_object_1_y_3 <= 75;
+
+              river_object_1_x_3 << 1'b1;
             end else begin
               row_1_object_3_exists <= 0;
             end
@@ -590,11 +614,15 @@ module datapath (
             river_object_2_x <= 319;  // test spawn value = 120
             river_object_2_y <= 115;  // test spawn value = 150
 
+            river_object_2_x << 1'b1;
+
             // potential river object
             if (rnd_13_bit_num[2] == 1) begin
               row_2_object_2_exists <= 1;
               river_object_2_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[6:3];
               river_object_2_y_2 <= 115;
+
+              river_object_2_x_2 << 1'b1;
             end else begin
               row_2_object_2_exists <= 0;
             end
@@ -604,6 +632,8 @@ module datapath (
               row_2_object_3_exists <= 1;
               river_object_2_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[3:0];
               river_object_2_y_3 <= 115;
+
+              river_object_2_x_3 << 1'b1;
             end else begin
               row_2_object_3_exists <= 0;
             end
@@ -617,6 +647,8 @@ module datapath (
               row_3_object_2_exists <= 1;
               river_object_3_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[11:8];
               river_object_3_y_2 <= 155;
+
+              river_object_3_x_2 << 1'b1;
             end else begin
               row_3_object_2_exists <= 0;
             end
@@ -626,6 +658,8 @@ module datapath (
               row_3_object_3_exists <= 1;
               river_object_3_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[8:3];
               river_object_3_y_3 <= 155;
+
+              river_object_3_x_3 << 1'b1;
             end else begin
               row_3_object_3_exists <= 0;
             end
@@ -633,26 +667,26 @@ module datapath (
         end else if (draw_river_obj_1) begin
             // river object 1 flows right at 60 pixels per second
             // object only moves horizontally
-            x <= river_object_1_x + next_x_river_obj;
+            x <= river_object_1_x[9:1] + next_x_river_obj;
             y <= river_object_1_y + next_y_river_obj;
 
         end else if (draw_river_obj_2) begin
             // river object 2 flows left at 60 pixels per second
             // object only moves horizontally
-            x <= river_object_2_x + next_x_river_obj;
+            x <= river_object_2_x[9:1] + next_x_river_obj;
             y <= river_object_2_y + next_y_river_obj;
 
         end else if (draw_river_obj_3) begin
             // river object 3 flows right at 60 pixels per second
             // object only moves horizontally
-            x <= river_object_3_x + next_x_river_obj;
+            x <= river_object_3_x[9:1] + next_x_river_obj;
             y <= river_object_3_y + next_y_river_obj;
             // move the river object for the next frame
 
         end else if (draw_pot_obj_1_2) begin
             dne_signal_2 <= 0;
             if (row_1_object_2_exists) begin
-              x <= river_object_1_x_2 + next_x_river_obj;
+              x <= river_object_1_x_2[9:1] + next_x_river_obj;
               y <= river_object_1_y_2 + next_y_river_obj;
             end else begin
               dne_signal_1 <= 1;
@@ -661,7 +695,7 @@ module datapath (
         end else if (draw_pot_obj_1_3) begin
             dne_signal_1 <= 0;
             if (row_1_object_3_exists) begin
-              x <= river_object_1_x_3 + next_x_river_obj;
+              x <= river_object_1_x_3[9:1] + next_x_river_obj;
               y <= river_object_1_y_3 + next_y_river_obj;
             end else begin
               dne_signal_2 <= 1;
@@ -670,7 +704,7 @@ module datapath (
         end else if (draw_pot_obj_2_2) begin
             dne_signal_2 <= 0;
             if (row_2_object_2_exists) begin
-              x <= river_object_2_x_2 + next_x_river_obj;
+              x <= river_object_2_x_2[9:1] + next_x_river_obj;
               y <= river_object_2_y_2 + next_y_river_obj;
             end else begin
               dne_signal_1 <= 1;
@@ -679,7 +713,7 @@ module datapath (
         end else if (draw_pot_obj_2_3) begin
             dne_signal_1 <= 0;
             if (row_2_object_3_exists) begin
-              x <= river_object_2_x_3 + next_x_river_obj;
+              x <= river_object_2_x_3[9:1] + next_x_river_obj;
               y <= river_object_2_y_3 + next_y_river_obj;
             end else begin
               dne_signal_2 <= 1;
@@ -688,7 +722,7 @@ module datapath (
         end else if (draw_pot_obj_3_2) begin
             dne_signal_2 <= 0;
             if (row_3_object_2_exists) begin
-              x <= river_object_3_x_2 + next_x_river_obj;
+              x <= river_object_3_x_2[9:1] + next_x_river_obj;
               y <= river_object_3_y_2 + next_y_river_obj;
             end else begin
               dne_signal_1 <= 1;
@@ -696,7 +730,7 @@ module datapath (
         end else if (draw_pot_obj_3_3) begin
               dne_signal_1 <= 0;
             if (row_3_object_3_exists) begin
-              x <= river_object_3_x_3 + next_x_river_obj;
+              x <= river_object_3_x_3[9:1] + next_x_river_obj;
               y <= river_object_3_y_3 + next_y_river_obj;
             end else begin
               dne_signal_2 <= 1;
@@ -760,7 +794,9 @@ module datapath (
             y <= next_y_scrn;
         end else if (win) begin
             score <= score + 1;
-            finer_rate <= !finer_rate;
+            rate <= rate + 1;
+            frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally
+            frog_y <= 48; // few pixels from bottom edge
         end
     end
 //            if(left && next_x_frog - 1 >= 0) begin
