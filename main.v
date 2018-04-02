@@ -500,6 +500,11 @@ module datapath (
     assign on_river_row_2 = (frog_y + 32 / 2 > 111) && (frog_y + 32 / 2 <= 158);
     assign on_river_row_3 = (frog_y + 32 / 2 > 158) && (frog_y + 32 / 2 < 203);
 
+
+    reg row_1_object_2_exists, row_1_object_3_exists;
+    reg row_2_object_2_exists, row_2_object_3_exists;
+    reg row_3_object_2_exists, row_3_object_3_exists;
+    
     // Check whether the frog is on a river object and on which row.
     wire on_river_object_row_1, on_river_object_row_2, on_river_object_row_3;
     assign on_river_object_row_1 = on_river_row_1 && (
@@ -548,10 +553,6 @@ module datapath (
   		  .o_LFSR_Done(lfsr_done)
       );
 
-    reg row_1_object_2_exists, row_1_object_3_exists;
-    reg row_2_object_2_exists, row_2_object_3_exists;
-    reg row_3_object_2_exists, row_3_object_3_exists;
-
     // get the 4 least significant bit
     // used in randomly generating river objects
 
@@ -578,7 +579,7 @@ module datapath (
             river_object_1_x <= 0;
             river_object_1_y <= 75;
 
-            river_object_1_x << 1'b1; // in case spawn x coordinate is not 0
+            river_object_1_x <= river_object_1_x << 1'b1; // in case spawn x coordinate is not 0
 
             // reset the data
 
@@ -594,7 +595,7 @@ module datapath (
               river_object_1_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[12:9]; // 96 + 10 + X, X < 16
               river_object_1_y_2 <= 75;
 
-              river_object_1_x_2 << 1'b1;
+              river_object_1_x_2 <= river_object_1_x_2 << 1'b1;
             end else begin
               row_1_object_2_exists <= 0;
             end
@@ -605,7 +606,7 @@ module datapath (
               river_object_1_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[9:6]; // 96 + 10 + X, X < 16
               river_object_1_y_3 <= 75;
 
-              river_object_1_x_3 << 1'b1;
+              river_object_1_x_3 <= river_object_1_x_3 << 1'b1;
             end else begin
               row_1_object_3_exists <= 0;
             end
@@ -614,7 +615,7 @@ module datapath (
             river_object_2_x <= 319;  // test spawn value = 120
             river_object_2_y <= 115;  // test spawn value = 150
 
-            river_object_2_x << 1'b1;
+            river_object_2_x <= river_object_2_x << 1'b1;
 
             // potential river object
             if (rnd_13_bit_num[2] == 1) begin
@@ -622,7 +623,7 @@ module datapath (
               river_object_2_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[6:3];
               river_object_2_y_2 <= 115;
 
-              river_object_2_x_2 << 1'b1;
+              river_object_2_x_2 <= river_object_2_x_2 << 1'b1;
             end else begin
               row_2_object_2_exists <= 0;
             end
@@ -633,7 +634,7 @@ module datapath (
               river_object_2_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[3:0];
               river_object_2_y_3 <= 115;
 
-              river_object_2_x_3 << 1'b1;
+              river_object_2_x_3 <= river_object_2_x_3 << 1'b1;
             end else begin
               row_2_object_3_exists <= 0;
             end
@@ -642,13 +643,15 @@ module datapath (
             river_object_3_x <=  0;
             river_object_3_y <= 155;
 
+            river_object_3_x <= river_object_3_x << 1'b1;
+
             // potential river object
             if (rnd_13_bit_num[4] == 1) begin
               row_3_object_2_exists <= 1;
               river_object_3_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[11:8];
               river_object_3_y_2 <= 155;
 
-              river_object_3_x_2 << 1'b1;
+              river_object_3_x_2 <= river_object_3_x_2 << 1'b1;
             end else begin
               row_3_object_2_exists <= 0;
             end
@@ -659,7 +662,7 @@ module datapath (
               river_object_3_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[8:3];
               river_object_3_y_3 <= 155;
 
-              river_object_3_x_3 << 1'b1;
+              river_object_3_x_3 <= river_object_3_x_3 << 1'b1;
             end else begin
               row_3_object_3_exists <= 0;
             end
