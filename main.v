@@ -99,6 +99,26 @@ module main_test ();
         .current_state(current_state)
     );
 
+        // ### VGA adapter. ###
+
+    vga_adapter #(
+        .RESOLUTION("320x240"),
+        .MONOCHROME("FALSE"),
+        .BITS_PER_COLOUR_CHANNEL(1),
+        .BACKGROUND_IMAGE("mif_files/black.mif")
+    ) vga (
+        .clock(clk), .resetn(!reset),
+
+        // Controlled signals.
+        .x(x), .y(y), .colour(color),
+        .plot(plot),
+
+        // VGA DAC signals.
+        .VGA_CLK(VGA_CLK),
+        .VGA_HS(VGA_HS), .VGA_VS(VGA_VS), .VGA_BLANK(VGA_BLANK_N), .VGA_SYNC(VGA_SYNC_N),
+        .VGA_R(VGA_R), .VGA_G(VGA_G), .VGA_B(VGA_B)
+    );
+
 endmodule // main_test
 /**
 ================================================================================
@@ -389,6 +409,8 @@ module datapath (
 
     ld_frog_loc,
 
+    reset_game,
+
     // score, lives, // for testing
 
     frame_tick,
@@ -400,7 +422,7 @@ module datapath (
     plot, x, y, color,
 
     dne_signal_1, dne_signal_2,
-    win, die
+    win, die, lose
 );
 
     // ### Inputs, outputs and wires. ###
@@ -414,6 +436,7 @@ module datapath (
     input move_objects;
     input erase_frog;
     input ld_frog_loc;
+    input reset_game;
 
     // input [1:0] rate;
 
@@ -436,11 +459,12 @@ module datapath (
     output plot;
     output reg [8:0] x;
     output reg [8:0] y;
-    output win, die; // indicates that the player won the level, or fell into the water and lost (died)
+    output win, die, lose; // indicates that the player won the level, or fell into the water and lost (died)
 
     // Data
     reg [5:0] rate;
     reg [3:0] score, lives;
+    assign lose = score == 0;
 
     reg pre_plot;
     wire is_transparent;
@@ -573,7 +597,7 @@ module datapath (
         pre_plot <= draw;
 
         // starting coordinates of the frog and river objects
-        if (reset) begin
+        if (reset || reset_game) begin
             frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally
             frog_y <= 48; //row_1_object_2_exists 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
             river_object_1_x <= 0;
@@ -1038,6 +1062,8 @@ module control (
 
     ld_frog_loc,
 
+    reset_game,
+
     draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3,
 
 
@@ -1056,6 +1082,7 @@ module control (
     output reg move_objects;
     output reg erase_frog;
     output reg ld_frog_loc;
+    output reg reset_game;
 
     output reg draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
 
@@ -1084,7 +1111,9 @@ module control (
                 S_WAIT_FROG             = 18,   // Wait before drawing frog.
                 S_DRAW_FROG             = 19,   // Draw frog.
                 S_MOVE_OBJECTS          = 20,   // Move objects for the next cycle. (One cycle is from state 4 to 15)
-                S_WAIT_FRAME_TICK       = 21;   // Wait for frame tick.
+                S_WAIT_FRAME_TICK       = 21,   // Wait for frame tick.
+                S_RESET_GAME            = 22,
+                S_DRAW_GAME_OVER_SCORE  = 23;
                 // S_WAIT_FROG_MOVEMENT    = 13,   // Wait before preceding to movement state.
                 // S_FROG_MOVEMENT         = 14;   // Movement state of frog (When key is pressed).
                 // S_DRAW_FROG             = 12,   // Draw frog.
@@ -1096,20 +1125,14 @@ module control (
         case (current_state)
             S_WAIT_START:
                 next_state = go ? S_DRAW_SCRN_START : S_WAIT_START;
-            S_DRAW_SCRN_START:
-                if(plot_done && space) begin
-                  next_state = S_DRAW_GAME_BG;
-                end else begin
-                  next_state = S_DRAW_SCRN_START;
-                end
+            S_DRAW_SCRN_START: 
+                next_state = space ? S_DRAW_GAME_BG : S_DRAW_SCRN_START;
             S_WAIT_GAME_OVER:
                 next_state = go ? S_DRAW_SCRN_GAME_OVER : S_WAIT_GAME_OVER;
             S_DRAW_SCRN_GAME_OVER:
-                if(plot_done && space) begin
-                  next_state = S_DRAW_GAME_BG;
-                end else begin
-                  S_DRAW_SCRN_GAME_OVER;
-                end
+                next_state = space ? S_RESET_GAME : S_DRAW_SCRN_GAME_OVER;
+            S_RESET_GAME:
+                next_state = S_DRAW_GAME_BG;
             S_WAIT_GAME_BG:
                 next_state = go ? S_DRAW_GAME_BG : S_WAIT_GAME_BG;
             S_DRAW_GAME_BG:
@@ -1237,6 +1260,7 @@ module control (
         move_objects = 0;
         erase_frog = 0;
         ld_frog_loc = 0;
+        reset_game = 0;
 
         draw_pot_obj_1_2 = 0;
         draw_pot_obj_1_3 = 0;
@@ -1252,6 +1276,9 @@ module control (
             end
             S_DRAW_SCRN_GAME_OVER: begin
                 draw_scrn_game_over = 1;
+            end
+            S_RESET_GAME: begin
+                reset_game = 1;
             end
             S_DRAW_GAME_BG: begin
                 draw_scrn_game_bg = 1;
