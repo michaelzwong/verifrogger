@@ -76,13 +76,17 @@ module numchar_ram_module (
 );
 
     input clk;
-    input [3:0] numchar; // The numerical character to display.
+    input [6:0] numchar; // The numerical character to display.
     input [4:0] x, y;
     
     output [2:0] color_out;
 
+    wire [3:0] char1, char2;
+    assign char1 = numchar < 10 ? 0 : numchar / 10;
+    assign char2 = numchar - 10 * char1;
+
     wire [7:0] x_offset;
-    assign x_offset = numchar * 7;
+    assign x_offset = x <= 7 ? char1 * 7 : char2 * 7;
 
     // ### SRM containing each numerical character. ###
 
