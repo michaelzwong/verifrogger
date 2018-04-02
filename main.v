@@ -78,7 +78,7 @@ module main_test ();
     control c0 (
         .clk(clk), .reset(reset),
 
-        .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
+        .go(go), .plot_done(plot_done), .space(space),
         .win(win), .die(die),
 
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
@@ -182,9 +182,9 @@ module VeriFrogger (
     wire space, enter;
 
 
-    wire mov_key_pressed;
+    // wire mov_key_pressed;
 
-    assign mov_key_pressed = w | a | s | d | up | left | down | right;
+    // assign mov_key_pressed = w | a | s | d | up | left | down | right;
 
     // The output from the counter for the keyboard.
     wire keyboard_clock;
@@ -286,7 +286,7 @@ module VeriFrogger (
     control c0 (
         .clk(clk), .reset(reset),
 
-        .go(go), .plot_done(plot_done), .mov_key_pressed(mov_key_pressed),
+        .go(go), .plot_done(plot_done), .space(space),
         .win(win), .die(die),
 
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
@@ -339,12 +339,12 @@ module VeriFrogger (
           .a(left),
           .s(down),
           .d(right),
-          .left(l),
-          .right(r),
-          .up(u),
-          .down(d),
-          .space(s),
-          .enter(e)
+          .left(left),
+          .right(right),
+          .up(up),
+          .down(down),
+          .space(space),
+          .enter(enter)
           );
 
 
@@ -582,7 +582,7 @@ module datapath (
 
             // reset the data
 
-            // initial rate is 0.5
+            // initial rate is 0.5 and increments by 0.5 everytime a win signal is triggered
             rate <= 1;
 
             lives <= 10;
@@ -1020,7 +1020,7 @@ endmodule
 module control (
     clk, reset,
 
-    go, plot_done, mov_key_pressed,
+    go, plot_done, space,
     win, die,
 
     dne_signal_1, dne_signal_2,
@@ -1042,7 +1042,7 @@ module control (
 );
 
     input clk, reset;
-    input go, plot_done, mov_key_pressed;
+    input go, plot_done, space;
     input dne_signal_1, dne_signal_2;
     input win, die;
     input frame_tick;
@@ -1094,11 +1094,19 @@ module control (
             S_WAIT_START:
                 next_state = go ? S_DRAW_SCRN_START : S_WAIT_START;
             S_DRAW_SCRN_START:
-                next_state = plot_done ? S_WAIT_GAME_OVER : S_DRAW_SCRN_START;
+                if(plot_done && space) begin
+                  next_state = S_DRAW_GAME_BG;
+                end else begin
+                  next_state = S_DRAW_SCRN_START;
+                end
             S_WAIT_GAME_OVER:
                 next_state = go ? S_DRAW_SCRN_GAME_OVER : S_WAIT_GAME_OVER;
             S_DRAW_SCRN_GAME_OVER:
-                next_state = plot_done ? S_WAIT_GAME_BG : S_DRAW_SCRN_GAME_OVER;
+                if(plot_done && space) begin
+                  next_state = S_DRAW_GAME_BG;
+                end else begin
+                  S_DRAW_SCRN_GAME_OVER;
+                end
             S_WAIT_GAME_BG:
                 next_state = go ? S_DRAW_GAME_BG : S_WAIT_GAME_BG;
             S_DRAW_GAME_BG:
