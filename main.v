@@ -51,9 +51,10 @@ module main_test ();
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(draw_river_obj_3),
-        .draw_score(draw_score), .draw_lives(draw_lives),
+        .draw_score(draw_score), .draw_lives(draw_lives), .draw_level(draw_level),
         .move_objects(move_objects),
         .erase_frog(erase_frog),
+        .reset_game(reset_game),
 
         .draw_pot_obj_1_2(draw_pot_obj_1_2), .draw_pot_obj_1_3(draw_pot_obj_1_3), .draw_pot_obj_2_2(draw_pot_obj_2_2),
         .draw_pot_obj_2_3(draw_pot_obj_2_3), .draw_pot_obj_3_2(draw_pot_obj_3_2), .draw_pot_obj_3_3(draw_pot_obj_3_3),
@@ -72,14 +73,14 @@ module main_test ();
 
         .plot(plot), .x(x), .y(y), .color(color),
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
-        .win(win), .die(die)
+        .win(win), .die(die), .lose(lose)
     );
 
     control c0 (
         .clk(clk), .reset(reset),
 
         .go(go), .plot_done(plot_done), .space(space),
-        .win(win), .die(die),
+        .win(win), .die(die), .lose(lose),
 
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
 
@@ -88,8 +89,10 @@ module main_test ();
         .draw_scrn_start(draw_scrn_start), .draw_scrn_game_over(draw_scrn_game_over),
         .draw_scrn_game_bg(draw_scrn_game_bg), .draw_frog(draw_frog),
         .draw_river_obj_1(draw_river_obj_1), .draw_river_obj_2(draw_river_obj_2), .draw_river_obj_3(draw_river_obj_3),
-        .draw_score(draw_score), .draw_lives(draw_lives), .move_objects(move_objects),
+        .draw_score(draw_score), .draw_lives(draw_lives), .draw_level(draw_level),
+        .move_objects(move_objects),
         .erase_frog(erase_frog),
+        .reset_game(reset_game),
 
         .ld_frog_loc(ld_frog_loc),
 
@@ -190,7 +193,7 @@ module VeriFrogger (
     wire [8:0] x, y;
     wire [2:0] color;
 
-	  wire win, die;
+	wire win, die, lose;
 
     // VGA wires.
     wire VGA_CLK, VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N;
@@ -300,14 +303,14 @@ module VeriFrogger (
 
         .plot(plot), .x(x), .y(y), .color(color),
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
-        .win(win), .die(die)
+        .win(win), .die(die), .lose(lose)
     );
 
     control c0 (
         .clk(clk), .reset(reset),
 
         .go(go), .plot_done(plot_done), .space(space),
-        .win(win), .die(die),
+        .win(win), .die(die), .lose(lose),
 
         .dne_signal_1(dne_signal_1), .dne_signal_2(dne_signal_2),
 
@@ -399,19 +402,15 @@ module datapath (
 
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
     draw_river_obj_1, draw_river_obj_2, draw_river_obj_3,
-    draw_score, draw_lives,
+    draw_score, draw_lives, draw_level,
     move_objects,
     erase_frog,
 
     draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3,
 
-    // rate, // for testing
-
     ld_frog_loc,
 
     reset_game,
-
-    // score, lives, // for testing
 
     frame_tick,
 
@@ -432,15 +431,12 @@ module datapath (
     input draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     input draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
     input draw_pot_obj_1_2, draw_pot_obj_1_3, draw_pot_obj_2_2, draw_pot_obj_2_3, draw_pot_obj_3_2, draw_pot_obj_3_3;
-    input draw_score, draw_lives;
+    input draw_score, draw_lives, draw_level;
+
     input move_objects;
     input erase_frog;
     input ld_frog_loc;
     input reset_game;
-
-    // input [1:0] rate;
-
-    // input [3:0] score, lives;
 
     input left, right, up, down;
 
@@ -459,11 +455,10 @@ module datapath (
     output plot;
     output reg [8:0] x;
     output reg [8:0] y;
-    output win, die, lose; // indicates that the player won the level, or fell into the water and lost (died)
+    output win, die, lose;
 
-    // Data
-    reg [5:0] rate;
-    reg [3:0] score, lives;
+    reg [6:0] rate;
+    reg [6:0] score, lives;
     assign lose = score == 0;
 
     reg pre_plot;
@@ -504,7 +499,7 @@ module datapath (
     wire draw, draw_scrn, draw_char, draw_river_obj;
     assign draw = draw_scrn || draw_char || draw_river_obj || draw_frog || erase_frog;
     assign draw_scrn = draw_scrn_start || draw_scrn_game_over || draw_scrn_game_bg;
-    assign draw_char = draw_score || draw_lives;
+    assign draw_char = draw_score || draw_lives || draw_level;
     assign draw_river_obj = draw_river_obj_1 || draw_river_obj_2 || draw_river_obj_3 ||
       draw_pot_obj_1_2 || draw_pot_obj_1_3 ||
       draw_pot_obj_2_2 || draw_pot_obj_2_3 ||
@@ -599,13 +594,13 @@ module datapath (
         // starting coordinates of the frog and river objects
         if (reset || reset_game) begin
             frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally
-            frog_y <= 48; //row_1_object_2_exists 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
+            frog_y <= 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
 
             // ### First object on row 1 ###.
             river_object_1_x <= 0;
             river_object_1_y <= 75;
 
-            river_object_1_x <= river_object_1_x << 1'b1; // in case spawn x coordinate is not 0
+            river_object_1_x << 1 => river_object_1_x; // in case spawn x coordinate is not 0
 
             // reset the data
 
@@ -813,6 +808,9 @@ module datapath (
         end else if (draw_lives) begin
             x <= 300 + next_x_char;
             y <= 23 + next_y_char;
+        end else if (draw_level) begin
+            x <= 300 + next_x_char;
+            y <= 38 + next_y_char;
         end else if (draw_frog) begin
             x <= frog_x + next_x_frog;
             y <= frog_y + next_y_frog;
@@ -867,8 +865,16 @@ module datapath (
             score <= score + 1;
             rate <= rate + 1;
             frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally
-            frog_y <= 48; // few pixels from bottom edge
+            frog_y <= 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
         end
+
+        if (die) begin
+            lives <= lives - 1;
+            frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally
+            frog_y <= 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
+        end
+
+
     end
 //            if(left && next_x_frog - 1 >= 0) begin
 //                x <= next_x_frog  - 1;
@@ -905,7 +911,7 @@ module datapath (
     plotter #(
         .WIDTH_X(9),
         .WIDTH_Y(9),
-        .MAX_X(7),
+        .MAX_X(14),
         .MAX_Y(10)
     ) plt_char (
         .clk(clk), .en(draw_char && !plot_done),
@@ -1028,15 +1034,22 @@ module datapath (
         .color_out(river_obj_2_color)
     );
 
-    // ### Score and life counters. ###
+    // ### Score, level and life counters. ###
 
-    wire [2:0] score_color, lives_color;
+    wire [2:0] score_color, lives_color, level_color;
 
     numchar_ram_module nc_score (
         .clk(clk),
         .numchar(score),
         .x(next_x_char), .y(next_y_char),
         .color_out(score_color)
+    );
+
+    numchar_ram_module nc_level (
+        .clk(clk),
+        .numchar(rate),
+        .x(next_x_char), .y(next_y_char),
+        .color_out(level_color)
     );
 
     numchar_ram_module nc_lives (
@@ -1067,6 +1080,8 @@ module datapath (
             color = score_color;
         else if (draw_lives)
             color = lives_color;
+        else if (draw_level)
+            color = level_color;
         else if (erase_frog)
             color = scrn_game_bg_color;
         else if (draw_frog)
@@ -1092,7 +1107,7 @@ module control (
     clk, reset,
 
     go, plot_done, space,
-    win, die,
+    win, die, lose,
 
     dne_signal_1, dne_signal_2,
 
@@ -1100,7 +1115,7 @@ module control (
 
     draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog,
     draw_river_obj_1, draw_river_obj_2, draw_river_obj_3,
-    draw_score, draw_lives,
+    draw_score, draw_lives, draw_level,
     move_objects,
     erase_frog,
 
@@ -1117,12 +1132,12 @@ module control (
     input clk, reset;
     input go, plot_done, space;
     input dne_signal_1, dne_signal_2;
-    input win, die;
+    input win, die, lose; 
     input frame_tick;
 
     output reg draw_scrn_start, draw_scrn_game_over, draw_scrn_game_bg, draw_frog;
     output reg draw_river_obj_1, draw_river_obj_2, draw_river_obj_3;
-    output reg draw_score, draw_lives;
+    output reg draw_score, draw_lives, draw_level;
     output reg move_objects;
     output reg erase_frog;
     output reg ld_frog_loc;
@@ -1157,7 +1172,9 @@ module control (
                 S_MOVE_OBJECTS          = 20,   // Move objects for the next cycle. (One cycle is from state 4 to 15)
                 S_WAIT_FRAME_TICK       = 21,   // Wait for frame tick.
                 S_RESET_GAME            = 22,
-                S_DRAW_GAME_OVER_SCORE  = 23;
+                S_DRAW_GAME_OVER_SCORE  = 23,
+                S_DRAW_LEVEL            = 24,
+                S_DRAW_GAME_OVER_LEVEL  = 26;
                 // S_WAIT_FROG_MOVEMENT    = 13,   // Wait before preceding to movement state.
                 // S_FROG_MOVEMENT         = 14;   // Movement state of frog (When key is pressed).
                 // S_DRAW_FROG             = 12,   // Draw frog.
@@ -1174,15 +1191,21 @@ module control (
             S_WAIT_GAME_OVER:
                 next_state = go ? S_DRAW_SCRN_GAME_OVER : S_WAIT_GAME_OVER;
             S_DRAW_SCRN_GAME_OVER:
-                next_state = space ? S_RESET_GAME : S_DRAW_SCRN_GAME_OVER;
+                next_state = S_DRAW_GAME_OVER_LEVEL;
+            S_DRAW_GAME_OVER_LEVEL:
+                next_state = S_DRAW_GAME_OVER_SCORE;
+            S_DRAW_GAME_OVER_SCORE:
+                next_state = S_RESET_GAME;
             S_RESET_GAME:
-                next_state = S_DRAW_GAME_BG;
+                next_state = space ? S_DRAW_GAME_BG : S_RESET_GAME;
             S_WAIT_GAME_BG:
                 next_state = go ? S_DRAW_GAME_BG : S_WAIT_GAME_BG;
             S_DRAW_GAME_BG:
                 next_state = plot_done ? S_DRAW_SCORE : S_DRAW_GAME_BG;
             S_DRAW_SCORE:
-                next_state = plot_done ? S_DRAW_LIVES : S_DRAW_SCORE;
+                next_state = plot_done ? S_DRAW_LEVEL : S_DRAW_SCORE;
+            S_DRAW_LEVEL:
+                next_state = plot_done ? S_DRAW_LIVES : S_DRAW_LEVEL;
             S_DRAW_LIVES:
                 next_state = plot_done ? S_DRAW_RIVER_OBJ_1 : S_DRAW_LIVES;
             S_WAIT_RIVER_OBJ:
@@ -1191,6 +1214,7 @@ module control (
                 next_state = plot_done ? S_DRAW_RIVER_OBJ_2 : S_DRAW_RIVER_OBJ_1;
             S_DRAW_RIVER_OBJ_2:
                 next_state = plot_done ? S_DRAW_RIVER_OBJ_3 : S_DRAW_RIVER_OBJ_2;
+
             // newly added third row of objects
             S_DRAW_RIVER_OBJ_3:
                 next_state = plot_done ? S_DRAW_POT_OBJ_1_2 : S_DRAW_RIVER_OBJ_3;
@@ -1259,7 +1283,7 @@ module control (
             S_MOVE_OBJECTS:
                 next_state = S_WAIT_FRAME_TICK;
             S_WAIT_FRAME_TICK:
-                next_state = frame_tick ? S_DRAW_GAME_BG : S_WAIT_FRAME_TICK;
+                next_state = frame_tick ? (lose ? S_DRAW_SCRN_GAME_OVER : S_DRAW_GAME_BG) : S_WAIT_FRAME_TICK;
                 // if(plot_done && mov_key_pressed)
                 //   next_state = S_DRAW_GAME_BG;
                 // else
@@ -1297,6 +1321,7 @@ module control (
         draw_scrn_game_bg = 0;
         draw_score = 0;
         draw_lives = 0;
+        draw_level = 0;
         draw_river_obj_1 = 0;
         draw_river_obj_2 = 0;
         draw_river_obj_3 = 0;
@@ -1332,6 +1357,9 @@ module control (
             end
             S_DRAW_LIVES: begin
                 draw_lives = 1;
+            end
+            S_DRAW_LEVEL: begin
+                draw_level = 1;
             end
             S_DRAW_RIVER_OBJ_1: begin
                 draw_river_obj_1 = 1;
@@ -1371,6 +1399,15 @@ module control (
 
             S_DRAW_POT_OBJ_3_3: begin
                 draw_pot_obj_3_3 = 1;
+            end
+
+
+
+            S_DRAW_GAME_OVER_LEVEL: begin
+                draw_level = 1;
+            end
+            S_DRAW_GAME_OVER_SCORE: begin
+                draw_score = 1;
             end
 
         endcase
