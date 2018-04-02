@@ -528,7 +528,7 @@ module datapath (
     reg row_1_object_2_exists, row_1_object_3_exists;
     reg row_2_object_2_exists, row_2_object_3_exists;
     reg row_3_object_2_exists, row_3_object_3_exists;
-    
+
     // Check whether the frog is on a river object and on which row.
     wire on_river_object_row_1, on_river_object_row_2, on_river_object_row_3;
     assign on_river_object_row_1 = on_river_row_1 && (
@@ -564,12 +564,12 @@ module datapath (
     // LFSR (Linear feedback shift register), outputs a random 13 bit number
     // bits [5:0] determine if additional random objects are generated
     //
-    wire [12:0] rnd_generator;
+    wire [19:0] rnd_generator;
 
     // Used for spawning river objects. Minimum distance is min_dist, max is
     // min_dist + 15
-    wire [12:0] rnd_13_bit_num = rnd_generator;
-    LFSR #(13)
+    wire [19:0] rnd_13_bit_num = rnd_generator;
+    LFSR #(20)
   	  lfsr0 (
         .i_Clk(clk),
         .i_Enable(1),
@@ -600,6 +600,8 @@ module datapath (
         if (reset || reset_game) begin
             frog_x <= 320 / 2 - 32 / 2; // spawn frog in middle horizontally
             frog_y <= 48; //row_1_object_2_exists 240 - 24 - 5; // spawn frog a few pixels from the bottom edge
+
+            // ### First object on row 1 ###.
             river_object_1_x <= 0;
             river_object_1_y <= 75;
 
@@ -613,13 +615,27 @@ module datapath (
             lives <= 10;
             score <= 0;
 
-            // potential river object
-            if (rnd_13_bit_num[0] == 1) begin
+            // potential river object on row 1
+            if (rnd_13_bit_num[0] == 1 || rnd_13_bit_num[19] == 1) begin
               row_1_object_2_exists <= 1;
-              river_object_1_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[12:9]; // 96 + 10 + X, X < 16
-              river_object_1_y_2 <= 75;
 
+              // check if the third river object in the row will spawn
+              // if it will spawn, then place the second river object so that
+              // it will not overlap with the third
+              if(rnd_13_bit_num[1] == 1) begin
+                // 96 (length of one river object) + 10 (minimum distance between two river objects) +
+                // X (random number), X < 64
+                river_object_1_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[19:14];
+
+              // if not, then the second river object can be placed in a wider margin
+              end else begin
+                // 96 (length of one river object) + 40 (minimum distance between two river objects
+                // if there is only two in a row) + X (random number), X < 256
+                river_object_1_x_2 <= 7'b1100000 + 6'b101000 + rnd_13_bit_num[19:12];
+              end
+              river_object_1_y_2 <= 75;
               river_object_1_x_2 <= river_object_1_x_2 << 1'b1;
+
             end else begin
               row_1_object_2_exists <= 0;
             end
@@ -627,7 +643,8 @@ module datapath (
             // potential river object
             if (rnd_13_bit_num[1] == 1) begin
               row_1_object_3_exists <= 1;
-              river_object_1_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[9:6]; // 96 + 10 + X, X < 16
+              // 96 + 10 + 63 (6 bit binary number max value) + 96 + 10 + 63 (6 bit binary number max value)
+              river_object_1_x_3 <= 7'b1100000 + 4'b1010 + 6'b111111 + 7'b1100000 + 4'b1010 + rnd_13_bit_num[14:9];
               river_object_1_y_3 <= 75;
 
               river_object_1_x_3 <= river_object_1_x_3 << 1'b1;
@@ -642,12 +659,25 @@ module datapath (
             river_object_2_x <= river_object_2_x << 1'b1;
 
             // potential river object
-            if (rnd_13_bit_num[2] == 1) begin
+            if (rnd_13_bit_num[2] == 1 || rnd_13_bit_num[18] == 1) begin
               row_2_object_2_exists <= 1;
-              river_object_2_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[6:3];
-              river_object_2_y_2 <= 115;
 
+              // check if the third river object in the row will spawn
+              // if it will spawn, then place the second river object so that
+              // it will not overlap with the third
+              if(rnd_13_bit_num[3] == 1) begin
+                // 96 (length of one river object) + 10 (minimum distance between two river objects) +
+                // X (random number), X < 64
+                river_object_2_x_2 <= 319 - 7'b1100000 - 4'b1010 - rnd_13_bit_num[11:6];
+              // if not, then the second river object can be placed in a wider margin
+              end else begin
+                // 96 (length of one river object) + 40 (minimum distance between two river objects
+                // if there is only two in a row) + X (random number), X < 256
+                river_object_2_x_2 <= 319 - 7'b1100000 - 6'b101000 - rnd_13_bit_num[17:10];
+              end
+              river_object_2_y_2 <= 115;
               river_object_2_x_2 <= river_object_2_x_2 << 1'b1;
+
             end else begin
               row_2_object_2_exists <= 0;
             end
@@ -655,7 +685,8 @@ module datapath (
             // potential river object
             if (rnd_13_bit_num[3] == 1) begin
               row_2_object_3_exists <= 1;
-              river_object_2_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[3:0];
+              river_object_2_x_3 <= 319 - 7'b1100000 + 4'b1010 + rnd_13_bit_num[3:0];
+              river_object_2_x_3 <= 319 - 7'b1100000 - 4'b1010 - 6'b111111 - 7'b1100000 - 4'b1010 - rnd_13_bit_num[12:7];
               river_object_2_y_3 <= 115;
 
               river_object_2_x_3 <= river_object_2_x_3 << 1'b1;
@@ -670,11 +701,24 @@ module datapath (
             river_object_3_x <= river_object_3_x << 1'b1;
 
             // potential river object
-            if (rnd_13_bit_num[4] == 1) begin
+            if (rnd_13_bit_num[4] == 1 || rnd_13_bit_num[17] == 1) begin
               row_3_object_2_exists <= 1;
-              river_object_3_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[11:8];
-              river_object_3_y_2 <= 155;
 
+              // check if the third river object in the row will spawn
+              // if it will spawn, then place the second river object so that
+              // it will not overlap with the third
+              if(rnd_13_bit_num[5] == 1) begin
+                // 96 (length of one river object) + 10 (minimum distance between two river objects) +
+                // X (random number), X < 64
+                river_object_3_x_2 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[15:10];
+
+              // if not, then the second river object can be placed in a wider margin
+              end else begin
+                // 96 (length of one river object) + 40 (minimum distance between two river objects
+                // if there is only two in a row) + X (random number), X < 256
+                river_object_3_x_2 <= 7'b1100000 + 4'b1010 + 6'b111111 + 7'b1100000 + 4'b1010 + rnd_13_bit_num[15:8];
+              end
+              river_object_3_y_2 <= 155;
               river_object_3_x_2 <= river_object_3_x_2 << 1'b1;
             end else begin
               row_3_object_2_exists <= 0;
@@ -683,7 +727,7 @@ module datapath (
             // potential river object
             if (rnd_13_bit_num[5] == 1) begin
               row_3_object_3_exists <= 1;
-              river_object_3_x_3 <= 7'b1100000 + 4'b1010 + rnd_13_bit_num[8:3];
+              river_object_3_x_3 <= 7'b1100000 + 4'b1010 + 6'b111111 + 7'b1100000 + 4'b1010 + rnd_13_bit_num[10:5];
               river_object_3_y_3 <= 155;
 
               river_object_3_x_3 <= river_object_3_x_3 << 1'b1;
