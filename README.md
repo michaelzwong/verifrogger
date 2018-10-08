@@ -1,3 +1,3 @@
 # Verifrogger
 
-A frog jumping game written in Verilog for the Altera DE1 FPGA board.
+A frog jumping game written in Verilog for the Intel's DE1-SOC FPGA board.
